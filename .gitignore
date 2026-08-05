@@ -1,23 +1,7 @@
-# 敏感配置
 .env
-
-# Python cache
 __pycache__/
 *.pyc
-
-# 筛选输出（每次运行生成，不提交）
-dashboard.html
-screened_stocks_full.csv
-screened_stocks.csv
-
-# 缓存数据（体积大，由用户自行拉取）
 cache/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-
-# OS
+dashboard_*.html
 .DS_Store
 Thumbs.db
