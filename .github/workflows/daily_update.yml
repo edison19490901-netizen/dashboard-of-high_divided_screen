@@ -28,6 +28,7 @@ jobs:
       - name: Run update pipeline
         env:
           TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: python gh_update.py
 
       - name: Commit and push
