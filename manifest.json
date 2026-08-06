@@ -3,16 +3,16 @@
   "short_name": "高股息看板",
   "description": "A股高股息低估值股票筛选看板",
   "start_url": "/dashboard-of-high_divided_screen/",
+  "scope": "/dashboard-of-high_divided_screen/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a0e27",
   "theme_color": "#0a0e27",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%230a0e27'/><text x='256' y='330' text-anchor='middle' font-size='280'>📈</text></svg>",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
     }
   ]
 }
