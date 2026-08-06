@@ -114,3 +114,16 @@ BBScore   = max(0, 30 - pctFromBBLower) / 30
 ## 免责声明
 
 仅供参考，不构成投资建议。
+
+## 本地定时任务管理
+
+```powershell
+# 禁用
+Disable-ScheduledTask -TaskName HighDividendDailyReport
+
+# 启用
+Enable-ScheduledTask -TaskName HighDividendDailyReport
+
+# 删除
+Unregister-ScheduledTask -TaskName HighDividendDailyReport -Confirm:$false
+```

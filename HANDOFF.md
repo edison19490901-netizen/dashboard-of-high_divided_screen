@@ -267,3 +267,16 @@ print(msg)
 - **GitHub 连接**：这台机器 HTTPS (schannel) 间歇性超时，SSH 稳定
 
 [[project-handoff-summary]]
+
+## 本地定时任务管理
+
+```powershell
+# 禁用（推荐：保留任务定义，随时可恢复）
+Disable-ScheduledTask -TaskName HighDividendDailyReport
+
+# 启用
+Enable-ScheduledTask -TaskName HighDividendDailyReport
+
+# 彻底删除
+Unregister-ScheduledTask -TaskName HighDividendDailyReport -Confirm:$false
+```
