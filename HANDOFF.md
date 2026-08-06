@@ -258,7 +258,42 @@ print(msg)
 
 ---
 
-# 注意事项 & 已知限制
+---
+
+# 方案三：Render 云端部署（支持 PWA 安装到手机桌面）
+
+## 部署架构
+
+```
+Render.com (免费 750h/月)
+  │
+  ├─ python app.py → HTTP 服务
+  │     ├─ / → 看板页面
+  │     ├─ /api/data → 筛选结果 JSON
+  │     ├─ /api/refresh_prices → 刷新股价 + PushPlus 推送
+  │     └─ /icon-192.png 等静态文件
+  │
+  └─ 手机 Chrome → 添加到主屏幕 ✅（Render 提供 HTTPS）
+```
+
+## 部署步骤
+
+1. 打开 https://render.com → GitHub 登录
+2. **New +** → **Web Service** → 选 `dashboard-of-high_divided_screen` 仓库
+3. 配置自动从 `render.yaml` 读取
+4. 添加环境变量：`TUSHARE_TOKEN` + `PUSHPLUS_TOKEN`（可选）
+5. 点 **Deploy Web Service**
+
+## PWA 踩坑记录
+
+| # | 问题 | 原因 | 解决 |
+|---|------|------|------|
+| 1 | 安装应用点击无反应 | `app.py` 未处理静态文件，图标 404 | 添加 `_send_static()` 方法 |
+| 2 | beforeinstallprompt 不触发 | 国产安卓 PWA 兼容性差 | 放弃 manifest+SW，用书签桌面方式 |
+| 3 | 图标加载失败 | 相对路径 vs 根路径 | 使用绝对路径 `/icon-192.png` |
+| 4 | 推送链接 404 | 用户名少 `1949` | 全局修正为 `edison19490901-netizen` |
+
+# 注意事项 # 注意事项 & 已知限制 已知限制
 
 - **两个方案互为备份**：GitHub Actions 主力，本地 Windows 定时任务备用
 - **数据源限制**：efiance (eastmoney) 在这台机器被屏蔽；Tushare 免费账户有频率限制
