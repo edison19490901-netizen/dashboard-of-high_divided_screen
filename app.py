@@ -237,8 +237,29 @@ class Handler(SimpleHTTPRequestHandler):
             self._json({'status': 'ok', 'cache': CACHE_DIR.exists()})
         elif path in ('/', '/dashboard.html'):
             self._serve_html()
+        elif path in ('/manifest.json', '/sw.js', '/icon-192.png', '/icon-512.png'):
+            self._send_static(path)
         else:
             self.send_error(404)
+
+    def _send_static(self, path):
+        file_path = BASE_DIR / path.lstrip('/')
+        if not file_path.exists():
+            self.send_error(404)
+            return
+        content_types = {
+            '.json': 'application/json',
+            '.js': 'application/javascript',
+            '.png': 'image/png',
+        }
+        ext = file_path.suffix
+        content = file_path.read_bytes()
+        self.send_response(200)
+        self.send_header('Content-Type', content_types.get(ext, 'application/octet-stream'))
+        self.send_header('Content-Length', str(len(content)))
+        self.send_header('Cache-Control', 'public, max-age=86400')
+        self.end_headers()
+        self.wfile.write(content)
 
     def do_POST(self):
         path = urlparse(self.path).path
