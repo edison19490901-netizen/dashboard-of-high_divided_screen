@@ -223,6 +223,67 @@ def update_tushare_cache():
     return True, f'已更新 {len(df)} 只股票 ({trade_date})'
 
 
+# ════════════════════ PushPlus ════════════════════
+
+import html as html_mod
+import urllib.request
+
+PAGES_URL = 'https://edison90901-netizen.github.io/dashboard-of-high_divided_screen/'
+
+
+def send_pushplus(token: str, title: str, content: str, template: str = 'html') -> bool:
+    url = 'http://www.pushplus.plus/send'
+    data = json.dumps({'token': token, 'title': title, 'content': content, 'template': template}).encode('utf-8')
+    req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        result = json.loads(resp.read().decode())
+        return result.get('code') == 200
+
+
+def build_push_html(df) -> str:
+    count = len(df)
+    now = datetime.now().strftime('%Y-%m-%d %H:%M')
+    df_sorted = df.sort_values('pct_from_low', ascending=True).head(20)
+
+    def pct_color(v):
+        try: v = float(v); return '#059669' if v <= 8 else '#d97706' if v <= 12 else '#dc2626'
+        except: return '#64748b'
+
+    def div_color(v):
+        try: v = float(v); return '#059669' if v >= 5 else '#d97706' if v >= 4 else '#dc2626'
+        except: return '#64748b'
+
+    rows = ''
+    for _, r in df_sorted.iterrows():
+        name = html_mod.escape(str(r.get('name', '-')))
+        code = html_mod.escape(str(r.get('code', '-')))
+        rows += (
+            f'<tr><td style="text-align:left;font-weight:500;white-space:nowrap">'
+            f'{name}<br><span style="font-size:10px;color:#8892b0">{code}</span></td>'
+            f'<td style="font-weight:600">{r.get("latest_price",0):.2f}</td>'
+            f'<td style="color:{div_color(r.get("dividend_yield",0))};font-weight:600">{r.get("dividend_yield",0):.1f}%</td>'
+            f'<td style="color:{pct_color(r.get("pct_from_low","-"))};font-weight:600">{r.get("pct_from_low","-")}%</td>'
+            f'<td style="color:{pct_color(r.get("pct_from_lower","-"))};font-weight:600">{r.get("pct_from_lower","-")}%</td>'
+            f'<td style="white-space:nowrap">{r.get("market_cap_billion",0):.0f}亿</td></tr>')
+
+    more = f'<div style="text-align:center;padding:8px;color:#d97706;font-size:12px">仅显示 TOP20，共 {count} 只</div>' if count > 20 else ''
+    return (
+        f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">'
+        f'<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>高股息筛选日报</title></head>'
+        f'<body style="margin:0;padding:10px;font-family:-apple-system,PingFang SC,Microsoft YaHei,sans-serif;background:#fff;color:#1a1a2e">'
+        f'<div style="text-align:center;padding:10px 0 14px;border-bottom:1px solid #e2e8f0;margin-bottom:10px">'
+        f'<div style="font-size:17px;font-weight:700;color:#1a1a2e">高股息筛选日报</div>'
+        f'<div style="color:#64748b;font-size:11px;margin-top:5px">{now} | 符合条件: <b style="color:#059669">{count}</b> 只</div></div>'
+        f'{more}<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff">'
+        f'<thead><tr style="background:#f1f5f9;color:#64748b;font-size:10px;letter-spacing:.5px">'
+        f'<th style="padding:8px 4px;text-align:left">名称</th><th style="padding:8px 4px">股价</th>'
+        f'<th style="padding:8px 4px">股息率</th><th style="padding:8px 4px">距低点</th>'
+        f'<th style="padding:8px 4px">距BB下</th><th style="padding:8px 4px">市值</th></tr></thead>'
+        f'<tbody>{rows}</tbody></table></div>'
+        f'<div style="text-align:center;padding:10px;color:#94a3b8;font-size:10px;border-top:1px solid #e2e8f0;margin-top:10px">'
+        f'数据来源: Tushare + Baostock | 仅供参考</div></body></html>')
+
+
 # ════════════════════ Web Server ════════════════════
 
 HTML_FILE = BASE_DIR / 'dashboard.html'
@@ -277,6 +338,17 @@ class Handler(SimpleHTTPRequestHandler):
             return
         data = json.loads(df.to_json(orient='records', force_ascii=False))
         today = datetime.now().strftime('%Y%m%d')
+
+        # PushPlus 微信推送
+        token = os.getenv('PUSHPLUS_TOKEN', '')
+        if token and not df.empty:
+            try:
+                html_content = build_push_html(df)
+                ok = send_pushplus(token, f'高股息筛选日报 ({len(data)}只)', html_content, 'html')
+                print(f'[{datetime.now():%H:%M}] PushPlus: {"OK" if ok else "FAIL"}')
+            except Exception as e:
+                print(f'[{datetime.now():%H:%M}] PushPlus error: {e}')
+
         self._json({'ok': True, 'stocks': data, 'count': len(data), 'price_date': today})
 
     def _json(self, data, status=200):
