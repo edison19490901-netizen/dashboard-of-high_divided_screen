@@ -341,13 +341,29 @@ function _showToken(){
 // ════════════════════  启动  ════════════════════
 D.load(D._detectApi());
 </script>
+<div id="pwa-status" style="position:fixed;bottom:12px;right:12px;z-index:9999;background:#111640;border:1px solid #1e2a5a;border-radius:8px;padding:8px 14px;font-size:11px;color:#8892b0;display:none"></div>
 <script>
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js',{scope:'./'}).then(function(r){
-    console.log('SW registered:',r.scope);
-  }).catch(function(e){
-    console.log('SW failed:',e);
-  });
-}
+(function(){
+  var s=document.getElementById('pwa-status');
+  function ok(msg){ s.style.display='block';s.innerHTML='✅ '+msg;s.style.color='#22c55e';s.style.borderColor='#22c55e'; }
+  function ng(msg){ s.style.display='block';s.innerHTML='❌ '+msg;s.style.color='#ef4444';s.style.borderColor='#ef4444'; }
+
+  // Check manifest
+  var m=document.querySelector('link[rel="manifest"]');
+  if(m){ ok('manifest 已加载'); }
+  else { ng('manifest 缺失'); }
+
+  // Register SW
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js',{scope:'./'}).then(function(r){
+      ok('PWA 就绪 (可安装)');
+      setTimeout(function(){ s.style.display='none'; },5000);
+    }).catch(function(e){
+      ng('SW 注册失败: '+e.message);
+    });
+  } else {
+    ng('浏览器不支持 SW');
+  }
+})();
 </script>
 </body></html>
