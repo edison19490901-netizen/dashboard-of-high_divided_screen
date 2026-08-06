@@ -228,7 +228,7 @@ def update_tushare_cache():
 import html as html_mod
 import urllib.request
 
-PAGES_URL = 'https://edison90901-netizen.github.io/dashboard-of-high_divided_screen/'
+PAGES_URL = 'https://edison19490901-netizen.github.io/dashboard-of-high_divided_screen/'
 
 
 def send_pushplus(token: str, title: str, content: str, template: str = 'html') -> bool:

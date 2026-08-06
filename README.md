@@ -6,7 +6,7 @@ A-share high-dividend low-valuation stock screening dashboard.
 ## 手机看板
 
 ```
-https://edison90901-netizen.github.io/dashboard-of-high_divided_screen/
+https://edison19490901-netizen.github.io/dashboard-of-high_divided_screen/
 ```
 
 每天 15:30 自动更新，手机浏览器直接打开即可。

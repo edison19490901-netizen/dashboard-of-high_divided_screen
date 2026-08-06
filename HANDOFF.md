@@ -20,7 +20,7 @@ metadata:
 
 ## 看板地址
 ```
-https://edison90901-netizen.github.io/dashboard-of-high_divided_screen/
+https://edison19490901-netizen.github.io/dashboard-of-high_divided_screen/
 ```
 手机浏览器直接打开即可查看。
 
