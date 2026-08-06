@@ -1,7 +1,8 @@
 {
   "name": "高股息筛选看板",
   "short_name": "高股息看板",
-  "start_url": "./",
+  "start_url": "./?utm_source=pwa",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0a0e27",
   "theme_color": "#0a0e27",
