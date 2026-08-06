@@ -341,6 +341,7 @@ function _showToken(){
 // ════════════════════  启动  ════════════════════
 D.load(D._detectApi());
 </script>
+<div id="install-btn" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:#6366f1;color:#fff;border:none;border-radius:24px;padding:12px 28px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,.4)">📱 添加到手机桌面</div>
 <div id="pwa-status" style="position:fixed;bottom:12px;right:12px;z-index:9999;background:#111640;border:1px solid #1e2a5a;border-radius:8px;padding:8px 14px;font-size:11px;color:#8892b0;display:none"></div>
 <script>
 (function(){
@@ -348,21 +349,36 @@ D.load(D._detectApi());
   function ok(msg){ s.style.display='block';s.innerHTML='✅ '+msg;s.style.color='#22c55e';s.style.borderColor='#22c55e'; }
   function ng(msg){ s.style.display='block';s.innerHTML='❌ '+msg;s.style.color='#ef4444';s.style.borderColor='#ef4444'; }
 
-  // Check manifest
   var m=document.querySelector('link[rel="manifest"]');
   if(m){ ok('manifest 已加载'); }
   else { ng('manifest 缺失'); }
 
-  // Register SW
+  var deferredPrompt;
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();
+    deferredPrompt=e;
+    document.getElementById('install-btn').style.display='block';
+  });
+
+  document.getElementById('install-btn').addEventListener('click',function(){
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(r){
+        if(r.outcome==='accepted'){ ok('已添加到桌面！'); }
+        document.getElementById('install-btn').style.display='none';
+      });
+    }
+  });
+
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js',{scope:'./'}).then(function(r){
-      ok('PWA 就绪 (可安装)');
-      setTimeout(function(){ s.style.display='none'; },5000);
+      ok('PWA 就绪');
+      setTimeout(function(){ s.style.display='none'; },4000);
     }).catch(function(e){
-      ng('SW 注册失败: '+e.message);
+      ng('SW 失败: '+e.message);
     });
   } else {
-    ng('浏览器不支持 SW');
+    ng('不支持 SW');
   }
 })();
 </script>
