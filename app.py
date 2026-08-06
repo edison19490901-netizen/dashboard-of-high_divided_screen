@@ -281,7 +281,8 @@ def build_push_html(df) -> str:
         f'<th style="padding:8px 4px">距BB下</th><th style="padding:8px 4px">市值</th></tr></thead>'
         f'<tbody>{rows}</tbody></table></div>'
         f'<div style="text-align:center;padding:10px;color:#94a3b8;font-size:10px;border-top:1px solid #e2e8f0;margin-top:10px">'
-        f'数据来源: Tushare + Baostock | 仅供参考</div></body></html>')
+        f'数据来源: Tushare + Baostock | 仅供参考<br>'
+        f'<a href="{PAGES_URL}" style="color:#6366f1;font-size:12px">📊 查看完整交互看板</a></div></body></html>')
 
 
 # ════════════════════ Web Server ════════════════════
