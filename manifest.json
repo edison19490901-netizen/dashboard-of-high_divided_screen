@@ -1,18 +1,14 @@
 {
   "name": "高股息筛选看板",
   "short_name": "高股息看板",
-  "description": "A股高股息低估值股票筛选看板",
-  "start_url": "/dashboard-of-high_divided_screen/",
-  "scope": "/dashboard-of-high_divided_screen/",
+  "start_url": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#0a0e27",
   "theme_color": "#0a0e27",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    }
-  ]
+  "icons": [{
+    "src": "icon-192.png",
+    "sizes": "192x192",
+    "type": "image/png",
+    "purpose": "any"
+  }]
 }

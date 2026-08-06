@@ -341,5 +341,13 @@ function _showToken(){
 // ════════════════════  启动  ════════════════════
 D.load(D._detectApi());
 </script>
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}</script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js',{scope:'./'}).then(function(r){
+    console.log('SW registered:',r.scope);
+  }).catch(function(e){
+    console.log('SW failed:',e);
+  });
+}
+</script>
 </body></html>
