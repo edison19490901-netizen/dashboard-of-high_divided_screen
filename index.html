@@ -346,6 +346,7 @@ D.load(D._detectApi());
 <script>
 (function(){
   var s=document.getElementById('pwa-status');
+  var btn=document.getElementById('install-btn');
   function ok(msg){ s.style.display='block';s.innerHTML='✅ '+msg;s.style.color='#22c55e';s.style.borderColor='#22c55e'; }
   function ng(msg){ s.style.display='block';s.innerHTML='❌ '+msg;s.style.color='#ef4444';s.style.borderColor='#ef4444'; }
 
@@ -357,23 +358,32 @@ D.load(D._detectApi());
   window.addEventListener('beforeinstallprompt',function(e){
     e.preventDefault();
     deferredPrompt=e;
-    document.getElementById('install-btn').style.display='block';
+    btn.style.display='block';
   });
 
-  document.getElementById('install-btn').addEventListener('click',function(){
+  btn.addEventListener('click',function(){
     if(deferredPrompt){
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function(r){
-        if(r.outcome==='accepted'){ ok('已添加到桌面！'); }
-        document.getElementById('install-btn').style.display='none';
+        if(r.outcome==='accepted'){
+          ok('已添加！');
+          btn.style.display='none';
+        }
       });
+    } else {
+      // fallback: tell user to use Chrome menu
+      alert('请点击右上角 ⋮ → 安装应用 / 添加到主屏幕');
     }
   });
 
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js',{scope:'./'}).then(function(r){
       ok('PWA 就绪');
-      setTimeout(function(){ s.style.display='none'; },4000);
+      // Show button after 2s regardless of beforeinstallprompt
+      setTimeout(function(){
+        if(!deferredPrompt) btn.style.display='block';
+        s.style.display='none';
+      },2000);
     }).catch(function(e){
       ng('SW 失败: '+e.message);
     });
