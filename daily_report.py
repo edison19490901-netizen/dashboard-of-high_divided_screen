@@ -18,6 +18,22 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(__file__))
 os.chdir(os.path.dirname(__file__))
 
+# ── 日志双写：屏幕 + 文件 ──
+class _Tee:
+    def __init__(self, *files):
+        self._files = files
+    def write(self, s):
+        for f in self._files:
+            f.write(s)
+            f.flush()
+    def flush(self):
+        for f in self._files:
+            f.flush()
+
+_log = open(os.path.join(os.path.dirname(__file__), 'auto_report.log'), 'a', encoding='utf-8')
+sys.stdout = _Tee(sys.stdout, _log)
+sys.stderr = _Tee(sys.stderr, _log)
+
 # GitHub Pages 看板地址
 PAGES_URL = 'https://edison19490901-netizen.github.io/dashboard-of-high_divided_screen/'
 GIT_PUSH_URL = 'git@github.com:edison19490901-netizen/dashboard-of-high_divided_screen.git'

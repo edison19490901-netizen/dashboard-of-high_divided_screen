@@ -108,6 +108,13 @@ def supplement_baostock(df):
             df.at[i, 'min_price_1y'] = round(mn, 2)
             df.at[i, 'pct_from_low'] = round((df.at[i, 'latest_price'] - mn) / mn * 100, 1)
 
+            # 用最新股价重新计算股息率（DPS 来自 Tushare，相对稳定）
+            dps = df.at[i, 'dividend_per_share']
+            if dps is not None and not (isinstance(dps, float) and pd.isna(dps)) and dps > 0:
+                new_price = df.at[i, 'latest_price']
+                if new_price > 0:
+                    df.at[i, 'dividend_yield'] = round(dps / new_price * 100, 2)
+
             # Bollinger Bands (周线: 20周MA ± 2×std)
             try:
                 dp_dt = dp.copy()
