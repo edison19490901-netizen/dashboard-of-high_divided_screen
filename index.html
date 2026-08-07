@@ -253,7 +253,7 @@ var V={
 
 // ════════════════════  Helpers  ════════════════════
 var H={
-  e:s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'),
+  e:s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'),
   n:(v,d)=>(Number(v)||0).toFixed(d),
   m:function(l,v,c){return'<div class="card-m"><span class="cml">'+l+'</span><span class="cmv'+(c?' '+c:'')+'">'+H.e(v)+'</span></div>'},
   flash:function(el){el.style.background='rgba(99,102,241,.12)';setTimeout(function(){el.style.background=''},600)},
