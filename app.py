@@ -16,6 +16,15 @@ CACHE_DIR = BASE_DIR / 'cache'
 if not CACHE_DIR.exists():
     CACHE_DIR = BASE_DIR.parent / 'cache'
 
+# Load .env at startup so all os.getenv() calls work everywhere
+try:
+    from dotenv import load_dotenv
+    for p in [BASE_DIR / '.env', BASE_DIR.parent / '.env']:
+        if p.exists():
+            load_dotenv(p)
+except ImportError:
+    pass
+
 DIVIDEND_THRESHOLD = 3.0
 MIN_MARKET_CAP = 500
 MAX_PCT_FROM_LOW = 15       # Price within 15% of 1Y low
@@ -24,10 +33,6 @@ PRICE_CACHE_FILE = CACHE_DIR / 'price_cache.json'
 
 
 def load_token():
-    from dotenv import load_dotenv
-    for p in [BASE_DIR / '.env', BASE_DIR.parent / '.env']:
-        if p.exists():
-            load_dotenv(p)
     return os.getenv('TUSHARE_TOKEN', '')
 
 
