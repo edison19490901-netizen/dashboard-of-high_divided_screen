@@ -35,12 +35,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin master
           git add dashboard.html index.html
 
           if git diff --cached --quiet && git diff --quiet; then
             echo "No changes"
           else
-            git pull --rebase origin master
             git commit -m "auto: dashboard update $(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M')"
             git push
             echo "Pushed"
