@@ -1,7 +1,7 @@
 """
-看板识股 — 后端 API 服务
-启动: python app.py
-HTML 看板可独立打开（file:// 或 http://localhost:8080）
+Dashboard Stock Screener — Backend API
+Start: python app.py
+Dashboard HTML can be opened standalone (file:// or http://localhost:8080)
 """
 import json, os, sys, time
 from datetime import datetime, timedelta
@@ -18,8 +18,8 @@ if not CACHE_DIR.exists():
 
 DIVIDEND_THRESHOLD = 3.0
 MIN_MARKET_CAP = 500
-MAX_PCT_FROM_LOW = 15       # 最新价距1年最低 < 15%
-MAX_PCT_FROM_LOWER = 15     # 最新价距周线BB下轨 < 15%
+MAX_PCT_FROM_LOW = 15       # Price within 15% of 1Y low
+MAX_PCT_FROM_LOWER = 15     # Price within 15% of weekly BB lower
 PRICE_CACHE_FILE = CACHE_DIR / 'price_cache.json'
 
 
@@ -31,7 +31,7 @@ def load_token():
     return os.getenv('TUSHARE_TOKEN', '')
 
 
-# ════════════════════ 数据层 ════════════════════
+# ════════════════════ Data Layer ════════════════════
 
 def screen_from_cache():
     pqts = sorted(CACHE_DIR.glob('daily_basic_*.parquet'), reverse=True)
@@ -80,7 +80,7 @@ def supplement_baostock(df):
     if df.empty:
         return df
 
-    # 登录 Baostock（带重试）
+    # Login to Baostock (with retry)
     login_ok = False
     for attempt in range(3):
         try:
@@ -88,29 +88,29 @@ def supplement_baostock(df):
             if lg.error_code == '0':
                 login_ok = True
                 break
-            print(f'  Baostock 登录失败 (尝试 {attempt+1}/3): {lg.error_msg}')
+            print(f'  Baostock login failed (attempt {attempt+1}/3): {lg.error_msg}')
             time.sleep(2)
         except Exception as e:
-            print(f'  Baostock 登录异常 (尝试 {attempt+1}/3): {e}')
+            print(f'  Baostock login error (attempt {attempt+1}/3): {e}')
             time.sleep(2)
     if not login_ok:
-        print('  Baostock 登录失败，跳过实时股价更新（使用 Tushare 缓存数据）')
+        print('  Baostock login failed, skipping real-time price update (using Tushare cache)')
         return df
 
     today = datetime.now().strftime('%Y%m%d')
     fail_count = 0
-    max_fail = 20  # 连续失败超过此数则放弃
+    max_fail = 20  # consecutive failures threshold
 
     for i, (_, row) in enumerate(df.iterrows()):
         if fail_count >= max_fail:
-            print(f'  Baostock 连续失败 {max_fail} 次，跳过剩余 {len(df) - i} 只股票')
+            print(f'  Baostock: {max_fail} consecutive failures, skipping remaining {len(df) - i} stocks')
             break
 
         df.at[i, 'price_date'] = today
         parts = row['code'].split('.')
         bs_code = f'{parts[1].lower()}.{parts[0]}' if len(parts) == 2 else row['code']
 
-        # 每只股票最多重试 2 次
+        # Retry up to 2 times per stock
         success = False
         for retry in range(2):
             try:
@@ -140,14 +140,8 @@ def supplement_baostock(df):
                 df.at[i, 'min_price_1y'] = round(mn, 2)
                 df.at[i, 'pct_from_low'] = round((df.at[i, 'latest_price'] - mn) / mn * 100, 1)
 
-                # 用最新股价重新计算股息率
-                dps = df.at[i, 'dividend_per_share']
-                if dps is not None and not (isinstance(dps, float) and pd.isna(dps)) and dps > 0:
-                    new_price = df.at[i, 'latest_price']
-                    if new_price > 0:
-                        df.at[i, 'dividend_yield'] = round(dps / new_price * 100, 2)
-
-                # Bollinger Bands (周线)
+                # Dividend yield & market cap from Tushare dv_ttm, not recalculated with price
+                # Bollinger Bands (weekly)
                 try:
                     dp_dt = dp.copy()
                     dp_dt['trade_date'] = pd.to_datetime(dp_dt['date']) if 'date' in dp_dt.columns else pd.to_datetime(dp_dt.index)
@@ -165,7 +159,7 @@ def supplement_baostock(df):
                 except Exception:
                     pass
 
-                fail_count = 0  # 成功则重置连续失败计数
+                fail_count = 0  # reset consecutive failure count on success
                 success = True
                 break
             except Exception:
@@ -174,7 +168,7 @@ def supplement_baostock(df):
                 else:
                     fail_count += 1
 
-        # 请求间隔，避免被 Baostock 限流
+        # Rate limit: 150ms between stocks
         time.sleep(0.15)
 
     bs.logout()
@@ -182,7 +176,7 @@ def supplement_baostock(df):
 
 
 def apply_price_filter(df):
-    """筛选：最新价距离1年最低 < 15% 且 距离周线BB下轨 < 15%"""
+    """Filter: price within 15% of 1Y low AND within 15% of weekly BB lower"""
     if df.empty:
         return df
     mask = df['pct_from_low'].notna() & df['pct_from_lower'].notna()
@@ -191,7 +185,7 @@ def apply_price_filter(df):
 
 
 def load_price_cache():
-    """读取缓存的股价数据（快速）"""
+    """Load cached price data (fast)"""
     if PRICE_CACHE_FILE.exists():
         try:
             with open(PRICE_CACHE_FILE, 'r', encoding='utf-8') as f:
@@ -203,7 +197,7 @@ def load_price_cache():
 
 
 def save_price_cache(df):
-    """保存股价数据到缓存"""
+    """Save price data to cache"""
     data = {
         'stocks': json.loads(df.to_json(orient='records', force_ascii=False)),
         'price_date': datetime.now().strftime('%Y%m%d'),
@@ -213,15 +207,15 @@ def save_price_cache(df):
 
 
 def run_full_pipeline(force_refresh=False):
-    """执行完整管线：Tushare筛选 → Baostock价格 → 价格过滤 → 缓存
-    - force_refresh=False: 优先返回缓存（快速）；无缓存时仅返回Tushare基础数据（不含Baostock）
-    - force_refresh=True: 强制执行Baostock管线并更新缓存
+    """Full pipeline: Tushare screen -> Baostock prices -> price filter -> cache
+    - force_refresh=False: prefer cache (fast); fallback to Tushare base data only
+    - force_refresh=True: full Baostock pipeline + cache update
     """
     if not force_refresh:
         cached_df, _ = load_price_cache()
         if not cached_df.empty:
             return cached_df, True  # from_cache=True
-        # 无缓存：只返回 Tushare 基础数据，不跑慢管线
+        # No cache: return Tushare base data only, skip slow pipeline
         df = screen_from_cache()
         return (df if df is not None else pd.DataFrame()), False
 
@@ -239,7 +233,7 @@ def run_full_pipeline(force_refresh=False):
 def update_tushare_cache():
     token = load_token()
     if not token:
-        return False, 'TUSHARE_TOKEN 未配置（请在 .env 中设置）'
+        return False, 'TUSHARE_TOKEN not configured (add it to .env file in app.py directory)'
     import tushare as ts
     pro = ts.pro_api(token=token)
     trade_date = None
@@ -252,18 +246,18 @@ def update_tushare_cache():
         except Exception:
             continue
     if not trade_date:
-        return False, '找不到最近交易日'
+        return False, 'Could not find recent trading date'
     try:
         df = pro.daily_basic(trade_date=trade_date)
         if df is None or df.empty:
-            return False, 'daily_basic 返回空'
+            return False, 'daily_basic returned empty'
     except Exception as e:
-        return False, f'API 调用失败: {e}'
+        return False, f'API call failed: {e}'
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     df.to_parquet(CACHE_DIR / f'daily_basic_{trade_date}.parquet', index=False)
     names = pro.stock_basic(exchange='', list_status='L', fields='ts_code,name')
     names.to_parquet(CACHE_DIR / 'stock_names.parquet', index=False)
-    return True, f'已更新 {len(df)} 只股票 ({trade_date})'
+    return True, f'Updated {len(df)} stocks ({trade_date})'
 
 
 # ════════════════════ PushPlus ════════════════════
@@ -272,18 +266,18 @@ import html as html_mod
 import urllib.request
 
 def get_dashboard_url():
-    """根据部署环境返回看板链接地址"""
+    """Return dashboard URL based on deployment environment"""
     if os.getenv('RENDER'):
         return 'https://dashboard-of-high-divided-screen.onrender.com'
     if os.getenv('GITHUB_ACTIONS'):
         return 'https://edison19490901-netizen.github.io/dashboard-of-high_divided_screen/'
-    # 本地环境：直接打开本地 HTML 文件
+    # Local: open local HTML file directly
     root = os.path.dirname(os.path.abspath(__file__))
     return f'file:///{root.replace(chr(92), "/")}/dashboard.html'
 
 
 def is_local_env():
-    """判断是否为本地环境"""
+    """Check if running in local environment"""
     return not os.getenv('RENDER') and not os.getenv('GITHUB_ACTIONS')
 
 
@@ -320,25 +314,25 @@ def build_push_html(df) -> str:
             f'<td style="color:{div_color(r.get("dividend_yield",0))};font-weight:600">{r.get("dividend_yield",0):.1f}%</td>'
             f'<td style="color:{pct_color(r.get("pct_from_low","-"))};font-weight:600">{r.get("pct_from_low","-")}%</td>'
             f'<td style="color:{pct_color(r.get("pct_from_lower","-"))};font-weight:600">{r.get("pct_from_lower","-")}%</td>'
-            f'<td style="white-space:nowrap">{r.get("market_cap_billion",0):.0f}亿</td></tr>')
+            f'<td style="white-space:nowrap">{r.get("market_cap_billion",0):.0f}B</td></tr>')
 
-    more = f'<div style="text-align:center;padding:8px;color:#d97706;font-size:12px">仅显示 TOP20，共 {count} 只</div>' if count > 20 else ''
+    more = f'<div style="text-align:center;padding:8px;color:#d97706;font-size:12px">Showing TOP 20 of {count} total</div>' if count > 20 else ''
     return (
-        f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">'
-        f'<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>高股息筛选日报</title></head>'
+        f'<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+        f'<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>High Dividend Daily Report</title></head>'
         f'<body style="margin:0;padding:10px;font-family:-apple-system,PingFang SC,Microsoft YaHei,sans-serif;background:#fff;color:#1a1a2e">'
         f'<div style="text-align:center;padding:10px 0 14px;border-bottom:1px solid #e2e8f0;margin-bottom:10px">'
-        f'<div style="font-size:17px;font-weight:700;color:#1a1a2e">高股息筛选日报</div>'
-        f'<div style="color:#64748b;font-size:11px;margin-top:5px">{now} | 符合条件: <b style="color:#059669">{count}</b> 只</div></div>'
+        f'<div style="font-size:17px;font-weight:700;color:#1a1a2e">High Dividend Daily Report</div>'
+        f'<div style="color:#64748b;font-size:11px;margin-top:5px">{now} | Matching: <b style="color:#059669">{count}</b> stocks</div></div>'
         f'{more}<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff">'
         f'<thead><tr style="background:#f1f5f9;color:#64748b;font-size:10px;letter-spacing:.5px">'
-        f'<th style="padding:8px 4px;text-align:left">名称</th><th style="padding:8px 4px">股价</th>'
-        f'<th style="padding:8px 4px">股息率</th><th style="padding:8px 4px">距低点</th>'
-        f'<th style="padding:8px 4px">距BB下</th><th style="padding:8px 4px">市值</th></tr></thead>'
+        f'<th style="padding:8px 4px;text-align:left">Name</th><th style="padding:8px 4px">Price</th>'
+        f'<th style="padding:8px 4px">Div Yield</th><th style="padding:8px 4px">From Low</th>'
+        f'<th style="padding:8px 4px">From BB</th><th style="padding:8px 4px">Mkt Cap</th></tr></thead>'
         f'<tbody>{rows}</tbody></table></div>'
         f'<div style="text-align:center;padding:10px;color:#94a3b8;font-size:10px;border-top:1px solid #e2e8f0;margin-top:10px">'
-        f'数据来源: Tushare + Baostock | 仅供参考<br>'
-        f'<a href="{get_dashboard_url()}" style="color:#6366f1;font-size:12px">📊 查看完整交互看板</a></div></body></html>')
+        f'Data sources: Tushare + Baostock | For reference only<br>'
+        f'<a href="{get_dashboard_url()}" style="color:#6366f1;font-size:12px">View Interactive Dashboard</a></div></body></html>')
 
 
 # ════════════════════ Web Server ════════════════════
@@ -391,26 +385,26 @@ class Handler(SimpleHTTPRequestHandler):
     def _api_refresh_prices(self):
         df, _ = run_full_pipeline(force_refresh=True)
         if df is None or df.empty:
-            self._json({'ok': False, 'error': '无缓存数据或无符合条件股票'}, 500)
+            self._json({'ok': False, 'error': 'No cached data or no stocks matching criteria'}, 500)
             return
         data = json.loads(df.to_json(orient='records', force_ascii=False))
         today = datetime.now().strftime('%Y%m%d')
 
-        # PushPlus 微信推送（有 token 就推送，本地/云端通用）
+        # PushPlus push (if token configured, works locally and on cloud)
         token = os.getenv('PUSHPLUS_TOKEN', '')
         if token and not df.empty:
             try:
                 html_content = build_push_html(df)
-                ok = send_pushplus(token, f'高股息筛选日报 ({len(data)}只)', html_content, 'html')
+                ok = send_pushplus(token, f'High Dividend Daily Report ({len(data)} stocks)', html_content, 'html')
                 print(f'[{datetime.now():%H:%M}] PushPlus: {"OK" if ok else "FAIL"}')
             except Exception as e:
                 print(f'[{datetime.now():%H:%M}] PushPlus error: {e}')
 
-        # 本地环境：尝试打开浏览器（交互式有效，定时任务静默失败）
+        # Local: try opening browser (works interactively, silent fail for scheduled tasks)
         if is_local_env():
             import webbrowser
             local_url = get_dashboard_url()
-            print(f'[{datetime.now():%H:%M}] 看板文件: {local_url}')
+            print(f'[{datetime.now():%H:%M}] Dashboard: {local_url}')
             try:
                 webbrowser.open(local_url)
             except Exception:
@@ -467,13 +461,13 @@ class Handler(SimpleHTTPRequestHandler):
 def main():
     port = int(os.getenv('PORT', '8080'))
     server = HTTPServer(('0.0.0.0', port), Handler)
-    print(f'API 服务: http://localhost:{port}')
-    print(f'数据接口: http://localhost:{port}/api/data')
-    print(f'更新接口: POST http://localhost:{port}/api/update')
+    print(f'API Server: http://localhost:{port}')
+    print(f'Data endpoint: http://localhost:{port}/api/data')
+    print(f'Update endpoint: POST http://localhost:{port}/api/update')
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print('\n已停止')
+        print('\nStopped')
         server.server_close()
 
 

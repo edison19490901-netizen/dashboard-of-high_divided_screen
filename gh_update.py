@@ -1,8 +1,8 @@
 """
-GitHub Actions 每日更新脚本
-- 读取 Tushare 缓存 + Baostock 实时股价
-- 更新 dashboard.html
-- 通过 PushPlus 推送到微信
+GitHub Actions daily update script
+- Read Tushare cache + Baostock real-time prices
+- Update dashboard.html
+- Push via PushPlus to WeChat
 """
 import sys, os, json, re, shutil, html as html_module
 from datetime import datetime
@@ -16,23 +16,23 @@ from app import screen_from_cache, supplement_baostock, apply_price_filter, upda
 
 
 def get_dashboard_url():
-    """根据部署环境返回看板链接地址"""
+    """Return dashboard URL based on deployment environment"""
     if os.getenv('RENDER'):
         return 'https://dashboard-of-high-divided-screen.onrender.com'
     if os.getenv('GITHUB_ACTIONS'):
         return 'https://edison19490901-netizen.github.io/dashboard-of-high_divided_screen/'
-    # 本地环境：直接打开本地 HTML 文件
+    # Local: open local HTML file directly
     root = os.path.dirname(os.path.abspath(__file__))
     return f'file:///{root.replace(chr(92), "/")}/dashboard.html'
 
 
 def is_local_env():
-    """判断是否为本地环境"""
+    """Check if running in local environment"""
     return not os.getenv('RENDER') and not os.getenv('GITHUB_ACTIONS')
 
 
 def send_pushplus(token: str, title: str, content: str, template: str = 'html') -> bool:
-    """通过 PushPlus 推送到微信"""
+    """Send push notification via PushPlus to WeChat"""
     import urllib.request
     url = 'http://www.pushplus.plus/send'
     data = json.dumps({
@@ -55,7 +55,7 @@ def send_pushplus(token: str, title: str, content: str, template: str = 'html') 
 
 
 def build_static_html(df) -> str:
-    """生成精简 TOP20 静态 HTML 表格（微信可直接渲染）"""
+    """Build compact TOP20 static HTML table (WeChat renderable)"""
     count = len(df)
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
 
@@ -93,32 +93,32 @@ def build_static_html(df) -> str:
             f'<td style="color:{div_color(div_y)};font-weight:600">{div_y:.1f}%</td>'
             f'<td style="color:{pct_color(pct_low)};font-weight:600">{pct_low}%</td>'
             f'<td style="color:{pct_color(pct_bb)};font-weight:600">{pct_bb}%</td>'
-            f'<td style="white-space:nowrap">{mcap:.0f}亿</td></tr>')
+            f'<td style="white-space:nowrap">{mcap:.0f}B</td></tr>')
 
     more = ''
     if count > 20:
         more = (f'<div style="text-align:center;padding:8px;color:#d97706;font-size:12px">'
-                f'仅显示 TOP20，共 {count} 只</div>')
+                f'Showing TOP 20 of {count} total</div>')
 
     return (
-        f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">'
+        f'<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
         f'<meta name="viewport" content="width=device-width,initial-scale=1.0">'
-        f'<title>高股息筛选日报</title></head>'
+        f'<title>High Dividend Daily Report</title></head>'
         f'<body style="margin:0;padding:10px;font-family:-apple-system,PingFang SC,Microsoft YaHei,sans-serif;background:#fff;color:#1a1a2e">'
         f'<div style="text-align:center;padding:10px 0 14px;border-bottom:1px solid #e2e8f0;margin-bottom:10px">'
-        f'<div style="font-size:17px;font-weight:700;color:#1a1a2e">高股息筛选日报</div>'
-        f'<div style="color:#64748b;font-size:11px;margin-top:5px">{now} | 符合条件: <b style="color:#059669">{count}</b> 只</div>'
-        f'<div style="color:#94a3b8;font-size:10px;margin-top:2px">股息率>3% · 市值>500亿 · 距1年低点<15% · 距BB下轨<15%</div></div>'
+        f'<div style="font-size:17px;font-weight:700;color:#1a1a2e">High Dividend Daily Report</div>'
+        f'<div style="color:#64748b;font-size:11px;margin-top:5px">{now} | Matching: <b style="color:#059669">{count}</b> stocks</div>'
+        f'<div style="color:#94a3b8;font-size:10px;margin-top:2px">Div Yield>3% · Mkt Cap>50B · From 1Y Low<15% · From BB Low<15%</div></div>'
         f'{more}'
         f'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff">'
         f'<thead><tr style="background:#f1f5f9;color:#64748b;font-size:10px;letter-spacing:.5px">'
-        f'<th style="padding:8px 4px;text-align:left">名称</th><th style="padding:8px 4px">股价</th>'
-        f'<th style="padding:8px 4px">股息率</th><th style="padding:8px 4px">距低点</th>'
-        f'<th style="padding:8px 4px">距BB下</th><th style="padding:8px 4px">市值</th></tr></thead>'
+        f'<th style="padding:8px 4px;text-align:left">Name</th><th style="padding:8px 4px">Price</th>'
+        f'<th style="padding:8px 4px">Div Yield</th><th style="padding:8px 4px">From Low</th>'
+        f'<th style="padding:8px 4px">From BB</th><th style="padding:8px 4px">Mkt Cap</th></tr></thead>'
         f'<tbody>{rows_html}</tbody></table></div>'
         f'<div style="text-align:center;padding:10px;color:#94a3b8;font-size:10px;border-top:1px solid #e2e8f0;margin-top:10px">'
-        f'数据来源: Tushare + Baostock | 仅供参考<br>'
-        f'<a href="{get_dashboard_url()}" style="color:#6366f1">查看完整交互看板</a></div></body></html>')
+        f'Data sources: Tushare + Baostock | For reference only<br>'
+        f'<a href="{get_dashboard_url()}" style="color:#6366f1">View Interactive Dashboard</a></div></body></html>')
 
 
 def main():
@@ -141,7 +141,7 @@ def main():
         if not is_local_env():
             pushplus_token = os.getenv('PUSHPLUS_TOKEN', '')
             if pushplus_token:
-                send_pushplus(pushplus_token, '高股息筛选 - 无数据', '缓存无数据', 'txt')
+                send_pushplus(pushplus_token, 'High Dividend Screener - No Data', 'No stocks in cache', 'txt')
         sys.exit(0)
 
     print(f'  Screened: {len(df)} stocks, fetching prices...')
@@ -149,7 +149,7 @@ def main():
     df = apply_price_filter(df)
     print(f'  After filter: {len(df)} stocks')
     if not df.empty:
-        save_price_cache(df)  # 持久化缓存, 供 Render 部署使用
+        save_price_cache(df)  # persist cache for Render deployment
 
     if df.empty:
         print('No stocks match criteria')
@@ -179,20 +179,20 @@ def main():
         ok, msg = update_tushare_cache()
         print(f'  Dividend yield refresh: {msg}')
 
-    # Step 5: PushPlus 微信推送（有 token 就推送，本地/云端通用）
+    # Step 5: PushPlus push (if token set, works locally and on cloud)
     pushplus_token = os.getenv('PUSHPLUS_TOKEN', '')
     if pushplus_token and stocks:
         html_content = build_static_html(df)
-        send_pushplus(pushplus_token, f'高股息筛选日报 ({len(stocks)}只)', html_content, 'html')
+        send_pushplus(pushplus_token, f'High Dividend Daily Report ({len(stocks)} stocks)', html_content, 'html')
     elif pushplus_token:
-        send_pushplus(pushplus_token, '高股息筛选 - 无结果',
-                      '今日无符合条件的股票（股息率>3% + 市值>500亿 + 价格低位）', 'txt')
+        send_pushplus(pushplus_token, 'High Dividend Screener - No Results',
+                      'No stocks match today (Div Yield>3% + Mkt Cap>50B + Low Price)', 'txt')
 
-    # 本地环境：尝试打开浏览器（交互式有效，定时任务静默失败）
+    # Local: try opening browser (works interactively, silent fail for scheduled tasks)
     if is_local_env():
         import webbrowser
         local_url = get_dashboard_url()
-        print(f'  看板文件: {local_url}')
+        print(f'  Dashboard: {local_url}')
         try:
             webbrowser.open(local_url)
         except Exception:
