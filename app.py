@@ -400,16 +400,6 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception as e:
                 print(f'[{datetime.now():%H:%M}] PushPlus error: {e}')
 
-        # Local: try opening browser (works interactively, silent fail for scheduled tasks)
-        if is_local_env():
-            import webbrowser
-            local_url = get_dashboard_url()
-            print(f'[{datetime.now():%H:%M}] Dashboard: {local_url}')
-            try:
-                webbrowser.open(local_url)
-            except Exception:
-                pass
-
         self._json({'ok': True, 'stocks': data, 'count': len(data), 'price_date': today})
 
     def _json(self, data, status=200):
