@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+cache/price_cache.json
+cache/*.parquet
+dashboard_*.html
+venv/
+.idea/
+auto_report.log
+output/
+.DS_Store
+Thumbs.db

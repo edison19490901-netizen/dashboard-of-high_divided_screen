@@ -1,0 +1,52 @@
+name: Daily Dashboard Update
+
+on:
+  schedule:
+    # 北京时间 15:30 = UTC 07:30, 周一至周五
+    - cron: '30 7 * * 1-5'
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write  # 允许 push
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Git config & pull latest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin master
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install tushare baostock pandas pyarrow python-dotenv
+
+      - name: Run update pipeline
+        env:
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: python gh_update.py
+
+      - name: Commit and push
+        run: |
+          git add dashboard.html index.html
+          git add -f cache/price_cache.json   # 父级.gitignore屏蔽cache/，需强制添加
+
+          if git diff --cached --quiet && git diff --quiet; then
+            echo "No changes"
+          else
+            git commit -m "auto: dashboard update $(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M')"
+            git pull --rebase origin master
+            git push
+            echo "Pushed"
+          fi
