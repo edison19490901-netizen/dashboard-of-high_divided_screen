@@ -97,7 +97,7 @@ def supplement_baostock(df):
         print('  Baostock login failed, skipping real-time price update (using Tushare cache)')
         return df
 
-    today = datetime.now().strftime('%Y%m%d')
+    today = datetime.now().strftime('%Y%m%d %H:%M')
     fail_count = 0
     max_fail = 20  # consecutive failures threshold
 
@@ -388,7 +388,7 @@ class Handler(SimpleHTTPRequestHandler):
             self._json({'ok': False, 'error': 'No cached data or no stocks matching criteria'}, 500)
             return
         data = json.loads(df.to_json(orient='records', force_ascii=False))
-        today = datetime.now().strftime('%Y%m%d')
+        today = datetime.now().strftime('%Y%m%d %H:%M')
 
         # PushPlus push (if token configured, works locally and on cloud)
         token = os.getenv('PUSHPLUS_TOKEN', '')

@@ -10,21 +10,24 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
 body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 20% 50%,rgba(99,102,241,.06),transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(34,197,94,.04),transparent 50%);pointer-events:none;z-index:0}
-.container{max-width:1400px;margin:0 auto;padding:16px 20px;position:relative;z-index:1}
-.header{text-align:center;padding:32px 20px 18px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.container{max-width:1600px;margin:0 auto;padding:16px 20px;position:relative;z-index:1}
+.header{text-align:center;padding:32px 20px 18px;border-bottom:1px solid var(--border);margin-bottom:12px}
 .header h1{font-size:1.7rem;font-weight:700;background:linear-gradient(135deg,#e2e8f0,#a5b4fc,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .header .sub{color:var(--muted);font-size:.85rem;margin-top:4px}
-.header .meta{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
-.header .meta span{font-size:.73rem;color:var(--muted);background:rgba(255,255,255,.03);padding:2px 10px;border-radius:10px}
-.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+/* Info bar above toolbar */
+.info-bar{display:flex;align-items:center;gap:12px;padding:6px 0;margin-bottom:8px;font-size:.78rem;color:var(--muted);flex-wrap:wrap}
+.info-bar .sep{color:#334155}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
 .btn{padding:9px 18px;border-radius:9px;border:none;font-size:.84rem;cursor:pointer;font-weight:500;transition:.2s}
 .btn-update{background:var(--accent);color:#fff}.btn-update:disabled{background:#475569;cursor:not-allowed}
 .btn-view{background:var(--card);color:var(--muted);border:1px solid var(--border)}.btn-view.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.search-box{padding:9px 14px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text);width:200px;outline:none;font-size:.84rem}.search-box:focus{border-color:var(--accent)}
+.search-box{padding:9px 14px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text);width:180px;outline:none;font-size:.84rem}.search-box:focus{border-color:var(--accent)}
 .sort-select{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--text);outline:none;cursor:pointer;font-size:.82rem}
-
-.result-count{color:var(--muted);font-size:.8rem;margin-left:auto}
-.grid-view{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px}
+/* Source bar above grid */
+.source-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.76rem;color:var(--muted);margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.source-bar .footer-text{text-align:right;font-size:.76rem;color:var(--muted)}
+.result-count{color:var(--muted);font-size:.8rem}
+.grid-view{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:20px}
 .grid-view.active{display:grid}.grid-view{display:none}
 .stock-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:.25s}
 .stock-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3);border-color:var(--accent)}
@@ -36,34 +39,30 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:
 .cml{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .cmv{font-size:.9rem;font-weight:600;font-family:monospace}.cmv.green{color:var(--green);font-size:1rem}
 .cmv.pct-lo{color:var(--green)}.cmv.pct-mi{color:var(--yellow)}.cmv.pct-hi{color:var(--red)}
+.card-target{grid-column:1/-1;padding:4px 0;font-size:.7rem;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.04)}
+.card-target span{font-family:monospace;color:var(--text)}
+.card-target b{font-weight:600;color:var(--accent)}
 .card-footer{padding:6px 16px 10px;display:flex;align-items:center;gap:7px}
 .bar-bg{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
 .bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width .6s}
 .table-view{display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow-x:auto;margin-bottom:20px}
 .table-view.active{display:block}
 table{width:100%;border-collapse:collapse;font-size:.82rem}
-
-
-
-
-
-th{padding:10px 6px;background:rgba(255,255,255,.02);color:var(--muted);font-weight:500;font-size:.7rem;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap;text-align:center}
-td{padding:7px 6px;border-bottom:1px solid rgba(255,255,255,.03);white-space:nowrap;text-align:center;font-family:monospace;font-variant-numeric:tabular-nums}
+th{padding:10px 5px;background:rgba(255,255,255,.02);color:var(--muted);font-weight:500;font-size:.68rem;letter-spacing:.03em;border-bottom:1px solid var(--border);white-space:nowrap;text-align:center}
+td{padding:7px 5px;border-bottom:1px solid rgba(255,255,255,.03);white-space:nowrap;text-align:center;font-family:monospace;font-variant-numeric:tabular-nums;font-size:.78rem}
 tr:hover td{background:rgba(255,255,255,.03);cursor:pointer}
 td.c0{text-align:center;color:var(--muted)}td.c1{text-align:center;font-family:inherit}
-.t-name{font-weight:500;line-height:1.25;overflow:hidden;text-overflow:ellipsis}.t-code{font-size:.68rem;color:var(--muted);font-family:monospace;display:block;line-height:1.25;overflow:hidden;text-overflow:ellipsis}
-.c9{color:var(--accent);font-weight:600}
-.c11.pct-lo{color:var(--green)}.c11.pct-mi{color:var(--yellow)}.c11.pct-hi{color:var(--red)}
 .t-name{font-weight:500;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.t-code{font-size:.68rem;color:var(--muted);font-family:monospace;display:block;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-div{font-weight:700}.t-div.hi{color:var(--green)}.t-div.mi{color:var(--yellow)}.t-div.lo{color:var(--muted)}
+.t-pct{font-weight:600}.t-pct.lo{color:var(--green)}.t-pct.mi{color:var(--yellow)}.t-pct.hi{color:var(--red)}
+.t-target{font-family:monospace;font-size:.75rem}
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:10px;font-size:.88rem;z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
 .toast.show{opacity:1}.toast.ok{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.3)}
 .toast.err{background:rgba(239,68,68,.2);color:var(--red);border:1px solid rgba(239,68,68,.3)}
-.meta-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:.78rem;color:var(--muted);margin-bottom:16px;flex-wrap:wrap;gap:8px}
-.footer{text-align:right;padding:0;color:var(--muted);font-size:.76rem;border-top:1px solid var(--border)}
 @media(max-width:768px){.container{padding:8px}.header{padding:18px 8px 12px}.header h1{font-size:1.2rem}
 .grid-view{grid-template-columns:1fr}.grid-view.active{grid-template-columns:1fr}
-.toolbar{flex-direction:column;align-items:stretch}.search-box,
-.result-count{margin-left:0;text-align:center}table{font-size:.65rem}th,td{padding:4px 3px}th:nth-child(5),td.c5,th:nth-child(8),td.c8,th:nth-child(9),td.c10{display:none}}
+.toolbar{flex-direction:column;align-items:stretch}
+th,td{padding:4px 3px;font-size:.65rem}th:nth-child(5),td.c5,th:nth-child(9),td.c9{display:none}}
 </style></head>
 <body>
 <div class="container">
@@ -71,7 +70,10 @@ td.c0{text-align:center;color:var(--muted)}td.c1{text-align:center;font-family:i
 <div class="header">
 <h1>High Dividend Low Valuation Screener</h1>
 <div class="sub">Mkt Cap &gt; 50B  |  Div Yield &gt; 3%  |  From 1Y Low &lt; 15%  |  From BB Low &lt; 15%  |  A-Share Market</div>
+</div>
 
+<div class="info-bar">
+<span id="metaDate">--</span><span class="sep">|</span><span id="metaCount">--</span><span class="sep">|</span><span id="metaSource">--</span>
 </div>
 
 <div class="toolbar">
@@ -83,27 +85,28 @@ td.c0{text-align:center;color:var(--muted)}td.c1{text-align:center;font-family:i
 <input class="search-box" id="q" placeholder="Search..." oninput="R()">
 <select class="sort-select" id="sort" onchange="R()">
 <option value="y">Div Yield &darr;</option><option value="Y">Div Yield &uarr;</option>
-<option value="p">From Low% &uarr;</option><option value="P">Price &darr;</option><option value="b">Buy Score &darr;</option><option value="m">Mkt Cap &darr;</option>
+<option value="p">From Low% &uarr;</option><option value="P">Price &darr;</option><option value="m">Mkt Cap &darr;</option>
 </select>
-<span class="result-count" id="rc"></span>
 </div>
 
-<div id="formula" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:.75rem;color:var(--muted);display:none">
-<b style="color:var(--accent)">Buy Score</b> = 0.4 &times; Low Score + 0.4 &times; Div Score + 0.2 &times; BB Score &nbsp;|&nbsp;
-Low Score = max(0, 50 &minus; From Low%) / 45 &nbsp;|&nbsp;
-Div Score = (Div Yield &minus; 3) / (Max Div Yield &minus; 3) &nbsp;|&nbsp;
-BB Score = max(0, 30 &minus; From BB%) / 30
+<div class="source-bar">
+<div class="footer-text">Div Yield / Mkt Cap: Tushare daily_basic | Price / Low: Baostock | For reference only</div>
+<span class="result-count" id="rc">--</span>
+</div>
+
+<div id="formula" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 16px;margin-bottom:12px;font-size:.73rem;color:var(--muted);display:none">
+Target Prices = DPS &divide; Target Div Yield &nbsp;|&nbsp;
+Columns show what price yields 6% / 5.5% / 5% / 4.5% dividend at current DPS
 </div>
 
 <div class="grid-view active" id="gv"></div>
 
 <div class="table-view" id="tv">
 <table><thead><tr>
-<th>#</th><th>Name/Code</th><th>Mkt Cap</th><th>Price</th><th>1Y Low</th><th>From Low%</th><th>Div Yield</th><th>DPS</th><th>BB Low</th><th>From BB%</th><th>Buy Score</th>
+<th>#</th><th>Name/Code</th><th>Mkt Cap</th><th>Price</th><th>1Y Low</th><th>From Low%</th><th>Div Yield</th><th>DPS</th><th>P@6%Div</th><th>P@5.5%Div</th><th>P@5%Div</th><th>P@4.5%Div</th><th>BB Low</th><th>From BB%</th>
 </tr></thead><tbody id="tb"></tbody></table></div>
 
 <div id="empty" style="display:none;text-align:center;padding:60px;color:var(--muted)"><div style="font-size:3rem;margin-bottom:16px">No Data</div><p>Click a data button or check API settings</p></div>
-<div class="meta-bar"><div><span id="metaDate">--</span> <span id="metaCount">--</span> <span id="metaSource">--</span></div><div class="footer">Div Yield / Mkt Cap: Tushare daily_basic | Price / Low: Baostock | For reference only</div></div>
 </div>
 
 <script>
@@ -122,10 +125,8 @@ var D={
     if(typeof EMBED!=='undefined' && EMBED.length>0){
       D._stocks=EMBED; D._loaded=true;
       document.getElementById('metaSource').textContent='Tushare+Baostock';
-      D.calcBuy(D._stocks);
-      document.getElementById('formula').style.display='block';
-      document.getElementById('metaCount').textContent=D._stocks.length+' stocks';
-      if(D._stocks.length>0) D._updateDates();
+      D._updateMeta();
+      D._updateDates();
       R();
     }
     // 2. Background: try API for fresher data
@@ -139,8 +140,7 @@ var D={
           D._stocks=j.stocks;
           D._loaded=true;
           document.getElementById('metaSource').textContent=hasFilter?'API (live)':'API (base)';
-          D.calcBuy(D._stocks);
-          document.getElementById('metaCount').textContent=D._stocks.length+' stocks';
+          D._updateMeta();
           if(D._stocks.length>0) D._updateDates();
           R();
         }
@@ -153,8 +153,19 @@ var D={
     var dd=(s.data_date||'');
     var ddStr=dd.length===8?dd.substr(0,4)+'-'+dd.substr(4,2)+'-'+dd.substr(6,2):dd;
     var pd=(s.price_date||'');
-    var pdStr=pd.length===8?pd.substr(0,4)+'-'+pd.substr(4,2)+'-'+pd.substr(6,2):ddStr;
-    document.getElementById('metaDate').textContent='Div data: '+ddStr+' | Price data: '+pdStr;
+    // price_date may include time like '20260807 14:30'
+    var pdStr;
+    if(pd.length>=13){
+      pdStr=pd.substr(0,4)+'-'+pd.substr(4,2)+'-'+pd.substr(6,2)+' '+pd.substr(9);
+    }else if(pd.length===8){
+      pdStr=pd.substr(0,4)+'-'+pd.substr(4,2)+'-'+pd.substr(6,2);
+    }else{pdStr=ddStr}
+    document.getElementById('metaDate').textContent='Div: '+ddStr+' | Price: '+pdStr;
+  },
+
+  _updateMeta(){
+    document.getElementById('formula').style.display='block';
+    document.getElementById('metaCount').textContent=D._stocks.length+' stocks';
   },
 
   _detectApi(){
@@ -166,27 +177,6 @@ var D={
     return a;
   },
 
-  calcBuy(stocks){
-    if(!stocks.length) return;
-    var maxDiv=Math.max.apply(null,stocks.map(function(s){return s.dividend_yield||0}));
-    stocks.forEach(function(s){
-      var p=s.pct_from_low||50;
-      var q=s.pct_from_lower||30;
-      var sL=Math.max(0,(50-p)/45);
-      var sD=(s.dividend_yield-3)/(maxDiv-3);
-      var sB=Math.max(0,(30-q)/30);
-      s._buy=Math.round((0.4*sL+0.4*sD+0.2*sB)*100);
-    });
-  },
-
-  screen(data){
-    return data.filter(s=>
-      s.market_cap_billion>D.MIN_MCAP && s.dividend_yield>D.MIN_DIV
-      && (s.pct_from_low!=null && s.pct_from_low<D.MAX_PCT_LOW)
-      && (s.pct_from_lower!=null && s.pct_from_lower<D.MAX_PCT_BB)
-    );
-  },
-
   sort(arr,key){
     switch(key){
       case'y':arr.sort((a,b)=>b.dividend_yield-a.dividend_yield);break;
@@ -194,11 +184,21 @@ var D={
       case'p':arr.sort((a,b)=>(a.pct_from_low||999)-(b.pct_from_low||999));break;
       case'P':arr.sort((a,b)=>a.latest_price-b.latest_price);break;
       case'm':arr.sort((a,b)=>b.market_cap_billion-a.market_cap_billion);break;
-      case'b':arr.sort((a,b)=>(b._buy||0)-(a._buy||0));break;
     }
     return arr;
   }
 };
+
+// Helper: calculate target prices for dividend yields
+function targetPrices(dps){
+  if(!dps || dps<=0) return {t6:'--',t55:'--',t5:'--',t45:'--'};
+  return {
+    t6: (dps/0.06).toFixed(2),
+    t55:(dps/0.055).toFixed(2),
+    t5: (dps/0.05).toFixed(2),
+    t45:(dps/0.045).toFixed(2)
+  };
+}
 
 // ════════════════════  Render Engine  ════════════════════
 var V={
@@ -211,14 +211,15 @@ var V={
       let p=s.pct_from_low, pc=(p!=null)?(p<10?'pct-lo':(p<30?'pct-mi':'pct-hi')):'',
         ps=(p!=null)?'+'+p.toFixed(1)+'%':'--';
       let m1=(s.min_price_1y!=null)?s.min_price_1y.toFixed(2):'--';
-      let dps=(s.dividend_per_share>0)?s.dividend_per_share.toFixed(4):'--';
+      let t=targetPrices(s.dividend_per_share);
       let mc=(s.market_cap_billion>0)?H.n(s.market_cap_billion,0)+'B':'--';
       return '<div class="stock-card '+cl+'" onclick="H.flash(this)">'+
         '<div class="card-header"><span class="card-name">'+H.e(s.name)+'</span><span class="card-code">'+H.e(s.code)+'</span></div>'+
         '<div class="card-body">'+
           H.m('Div Yield',d.toFixed(2)+'%','green')+H.m('Price',s.latest_price.toFixed(2))+
           H.m('1Y Low',m1)+H.m('From Low',ps,pc)+
-          H.m('BB Low / %',(s.bb_lower!=null?s.bb_lower.toFixed(2):'--')+' / '+(s.pct_from_lower!=null?'+'+s.pct_from_lower.toFixed(1)+'%':'--'))+H.m('Buy Score',(s._buy||0),'green')+
+          H.m('BB Low / %',(s.bb_lower!=null?s.bb_lower.toFixed(2):'--')+' / '+(s.pct_from_lower!=null?'+'+s.pct_from_lower.toFixed(1)+'%':'--'))+H.m('Mkt Cap',mc)+
+          '<div class="card-target"><b>Target Prices:</b><span>6%='+t.t6+'</span><span>5.5%='+t.t55+'</span><span>5%='+t.t5+'</span><span>4.5%='+t.t45+'</span></div>'+
         '</div>'+
         '<div class="card-footer"><div class="bar-bg"><div class="bar-fill" style="width:'+Math.min(d/8*100,100)+'%"></div></div>'+d.toFixed(1)+'%</div></div>';
     }).join('');
@@ -226,11 +227,13 @@ var V={
 
   table(arr){
     return arr.map((s,i)=>{
-      let d=s.dividend_yield, dc=d>=7?'#22c55e':(d>=6?'#eab308':'#94a3b8');
+      let d=s.dividend_yield, dc=d>=7?'#22c55e':(d>=6?'#eab308':'#94a3b8'), dcl=d>=7?'hi':(d>=6?'mi':'lo');
       let p=s.pct_from_low, pc=(p!=null)?(p<10?'#22c55e':(p<30?'#eab308':'#ef4444')):'#94a3b8',
+        pcl=(p!=null)?(p<10?'lo':(p<30?'mi':'hi')):'',
         ps=(p!=null)?'+'+p.toFixed(1)+'%':'--';
       let m1=(s.min_price_1y!=null)?s.min_price_1y.toFixed(2):'--';
       let dps=(s.dividend_per_share>0)?s.dividend_per_share.toFixed(4):'--';
+      let t=targetPrices(s.dividend_per_share);
       let mc=(s.market_cap_billion>0)?H.n(s.market_cap_billion,0)+'B':'--';
       let bbLo=(s.bb_lower!=null)?s.bb_lower.toFixed(2):'--';
       let pBL=s.pct_from_lower, pbc=(pBL!=null)?(pBL<10?'pct-lo':(pBL<25?'pct-mi':'pct-hi')):'',
@@ -241,12 +244,15 @@ var V={
         '<td class="c3">'+H.e(mc)+'</td>'+
         '<td class="c4">'+s.latest_price.toFixed(2)+'</td>'+
         '<td class="c5">'+m1+'</td>'+
-        '<td class="c6" style="color:'+pc+';font-weight:600">'+ps+'</td>'+
-        '<td class="c7" style="color:'+dc+';font-weight:700">'+d.toFixed(2)+'%</td>'+
+        '<td class="c6 t-pct '+pcl+'" style="color:'+pc+'">'+ps+'</td>'+
+        '<td class="c7 t-div '+dcl+'" style="color:'+dc+'">'+d.toFixed(2)+'%</td>'+
         '<td class="c8">'+dps+'</td>'+
-        '<td class="c10">'+bbLo+'</td>'+
-        '<td class="c11 '+pbc+'">'+pbs+'</td>'+
-        '<td class="c9">'+(s._buy||0)+'</td></tr>';
+        '<td class="c9 t-target">'+t.t6+'</td>'+
+        '<td class="c10 t-target">'+t.t55+'</td>'+
+        '<td class="c11 t-target">'+t.t5+'</td>'+
+        '<td class="c12 t-target">'+t.t45+'</td>'+
+        '<td class="c13">'+bbLo+'</td>'+
+        '<td class="c14 '+pbc+'">'+pbs+'</td></tr>';
     }).join('');
   }
 };
@@ -291,8 +297,9 @@ async function U(){
 // ════════════════════  Export Excel  ════════════════════
 function X(){
   if(!D._stocks.length) return;
-  var h=['#','Name','Code','Mkt Cap (B)','Price','1Y Low','From Low%','Div Yield%','DPS','Buy Score','BB Low','From BB%'];
+  var h=['#','Name','Code','Mkt Cap (B)','Price','1Y Low','From Low%','Div Yield%','DPS','P@6%Div','P@5.5%Div','P@5%Div','P@4.5%Div','BB Low','From BB%'];
   var rows=D._stocks.map(function(s,i){
+    var t=targetPrices(s.dividend_per_share);
     return[
       i+1, s.name, s.code,
       (s.market_cap_billion>0?s.market_cap_billion.toFixed(0):''),
@@ -301,7 +308,7 @@ function X(){
       (s.pct_from_low!=null?'+'+(s.pct_from_low||0).toFixed(1)+'%':''),
       (s.dividend_yield||0).toFixed(2)+'%',
       (s.dividend_per_share>0?s.dividend_per_share.toFixed(4):''),
-      s._buy||0,
+      t.t6, t.t55, t.t5, t.t45,
       (s.bb_lower!=null?s.bb_lower.toFixed(2):''),
       (s.pct_from_lower!=null?'+'+s.pct_from_lower.toFixed(1)+'%':'')
     ];
@@ -324,7 +331,7 @@ async function P(){
   try{
     var r=await fetch(api+'/api/refresh_prices',{method:'POST',signal:AbortSignal.timeout(120000)});
     var j=await r.json();
-    if(j.ok){D._stocks=j.stocks; D._loaded=true; D.calcBuy(D._stocks); D._updateDates(); R(); H.toast('ok',j.count+' stocks updated')}
+    if(j.ok){D._stocks=j.stocks; D._loaded=true; D._updateMeta(); D._updateDates(); R(); H.toast('ok',j.count+' stocks updated')}
     else{H.toast('err',j.error||'Update failed')}
   }catch(e){H.toast('err','Connection failed: '+e.message)}
   btn.disabled=false;btn.textContent='Update Price';
