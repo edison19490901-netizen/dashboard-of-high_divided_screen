@@ -40,6 +40,7 @@ jobs:
           if git diff --cached --quiet && git diff --quiet; then
             echo "No changes"
           else
+            git pull --rebase origin master
             git commit -m "auto: dashboard update $(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M')"
             git push
             echo "Pushed"
