@@ -2,8 +2,8 @@
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0e27">
-<link rel="apple-touch-icon" href="/icon-192.png">
-<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/screen_icon.png">
+<link rel="icon" type="image/png" href="/screen_icon.png">
 <title>High Dividend Low Valuation Screener</title>
 <style>
 :root{--bg:#0a0e27;--card:#111640;--border:#1e2456;--text:#e2e8f0;--muted:#8892b0;--green:#22c55e;--yellow:#eab308;--red:#ef4444;--accent:#6366f1}
@@ -14,7 +14,6 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:
 .header{text-align:center;padding:32px 20px 18px;border-bottom:1px solid var(--border);margin-bottom:12px}
 .header h1{font-size:1.7rem;font-weight:700;background:linear-gradient(135deg,#e2e8f0,#a5b4fc,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .header .sub{color:var(--muted);font-size:.85rem;margin-top:4px}
-/* Info bar above toolbar */
 .info-bar{display:flex;align-items:center;gap:12px;padding:6px 0;margin-bottom:8px;font-size:.78rem;color:var(--muted);flex-wrap:wrap}
 .info-bar .sep{color:#334155}
 .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
@@ -23,29 +22,30 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:
 .btn-view{background:var(--card);color:var(--muted);border:1px solid var(--border)}.btn-view.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .search-box{padding:9px 14px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text);width:180px;outline:none;font-size:.84rem}.search-box:focus{border-color:var(--accent)}
 .sort-select{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--text);outline:none;cursor:pointer;font-size:.82rem}
-/* Source bar above grid */
 .source-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.76rem;color:var(--muted);margin-bottom:8px;flex-wrap:wrap;gap:6px}
-.source-bar .footer-text{text-align:right;font-size:.76rem;color:var(--muted)}
 .result-count{color:var(--muted);font-size:.8rem}
 .grid-view{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:20px}
 .grid-view.active{display:grid}.grid-view{display:none}
 .stock-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:.25s}
 .stock-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3);border-color:var(--accent)}
 .stock-card.hi{border-left:3px solid var(--green)}.stock-card.mi{border-left:3px solid var(--yellow)}.stock-card.lo{border-left:3px solid var(--muted)}
-.card-header{padding:12px 16px 6px;display:flex;justify-content:space-between;align-items:center}
-.card-name{font-weight:600;font-size:.95rem}.card-code{font-size:.68rem;color:var(--muted);font-family:monospace;background:rgba(255,255,255,.04);padding:2px 8px;border-radius:5px}
+.card-header{padding:10px 16px 4px;display:grid;grid-template-columns:1fr 1fr;align-items:center}
+.card-name{font-weight:600;font-size:.95rem}.card-code{font-size:.68rem;color:var(--muted);font-family:monospace;background:rgba(255,255,255,.04);padding:2px 8px;border-radius:5px;text-align:right;justify-self:end}
 .card-body{padding:0 16px 8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .card-m{display:flex;flex-direction:column;gap:1px}
+.card-m:nth-child(odd){text-align:left}
+.card-m:nth-child(even){text-align:right}
 .cml{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .cmv{font-size:.9rem;font-weight:600;font-family:monospace}.cmv.green{color:var(--green);font-size:1rem}
 .cmv.pct-lo{color:var(--green)}.cmv.pct-mi{color:var(--yellow)}.cmv.pct-hi{color:var(--red)}
-.card-target{grid-column:1/-1;padding:4px 0;display:flex;flex-direction:column;gap:2px;border-top:1px solid rgba(255,255,255,.06)}
-.card-target .t-row{display:grid;grid-template-columns:1fr 1fr;font-family:monospace;font-size:.78rem}
-.card-target .t-row b{color:#a5b4fc;font-weight:600;text-align:left}
-.card-target .t-row span{color:#cbd5e1;font-weight:500;text-align:left}
-.card-footer{padding:6px 16px 10px;display:flex;align-items:center;gap:7px}
-.bar-bg{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
-.bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width .6s}
+.card-target{grid-column:1/-1;padding:4px 0;display:grid;grid-template-columns:1fr 1fr;gap:1px 10px;border-top:1px solid rgba(255,255,255,.06)}
+.card-target .t-item{font-family:monospace;font-size:.72rem;color:#cbd5e1;white-space:nowrap;text-align:center}
+.card-target .t-dash{display:inline-block;width:14px;height:0;border-top:1.5px dashed;vertical-align:middle;margin-left:3px}
+.card-chart{padding:4px 16px 8px;display:flex;align-items:center;gap:6px}
+.card-chart canvas{width:100%;height:104px;border-radius:4px}
+.card-chart .chart-fallback{flex:1;display:flex;align-items:center;gap:7px}
+.card-chart .bar-bg{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.card-chart .bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width .6s}
 .table-view{display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow-x:auto;margin-bottom:20px}
 .table-view.active{display:block}
 table{width:100%;border-collapse:collapse;font-size:.82rem}
@@ -107,7 +107,7 @@ th,td{padding:4px 3px;font-size:.65rem}th:nth-child(5),td.c5,th:nth-child(9),td.
 
 <script>
 
-var EMBED=[{"code": "000001.SZ", "name": "平安银行", "market_cap_billion": 2254.97, "latest_price": 11.27, "dividend_yield": 5.13, "dividend_per_share": 0.596, "min_price_1y": 10.05, "pct_from_low": 12.1, "bb_upper": 11.48, "bb_lower": 10.04, "pct_from_upper": -1.8, "pct_from_lower": 12.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "000157.SZ", "name": "中联重科", "market_cap_billion": 652.1, "latest_price": 7.27, "dividend_yield": 5.3, "dividend_per_share": 0.4, "min_price_1y": 6.61, "pct_from_low": 9.9, "bb_upper": 8.4, "bb_lower": 6.57, "pct_from_upper": -13.4, "pct_from_lower": 10.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "000538.SZ", "name": "云南白药", "market_cap_billion": 932.99, "latest_price": 50.69, "dividend_yield": 4.98, "dividend_per_share": 2.602, "min_price_1y": 47.0, "pct_from_low": 7.9, "bb_upper": 55.32, "bb_lower": 46.91, "pct_from_upper": -8.4, "pct_from_lower": 8.0, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "000651.SZ", "name": "格力电器", "market_cap_billion": 2294.34, "latest_price": 40.25, "dividend_yield": 7.3, "dividend_per_share": 2.9913, "min_price_1y": 36.72, "pct_from_low": 9.6, "bb_upper": 41.76, "bb_lower": 35.76, "pct_from_upper": -3.6, "pct_from_lower": 12.6, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "000895.SZ", "name": "双汇发展", "market_cap_billion": 907.39, "latest_price": 25.38, "dividend_yield": 5.54, "dividend_per_share": 1.45, "min_price_1y": 22.4, "pct_from_low": 13.3, "bb_upper": 29.05, "bb_lower": 22.11, "pct_from_upper": -12.6, "pct_from_lower": 14.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "000963.SZ", "name": "华东医药", "market_cap_billion": 501.04, "latest_price": 27.82, "dividend_yield": 3.26, "dividend_per_share": 0.9301, "min_price_1y": 26.41, "pct_from_low": 5.3, "bb_upper": 36.36, "bb_lower": 24.98, "pct_from_upper": -23.5, "pct_from_lower": 11.4, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "001965.SZ", "name": "招商公路", "market_cap_billion": 682.23, "latest_price": 9.52, "dividend_yield": 3.72, "dividend_per_share": 0.373, "min_price_1y": 8.42, "pct_from_low": 13.1, "bb_upper": 10.13, "bb_lower": 8.51, "pct_from_upper": -6.0, "pct_from_lower": 11.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "002236.SZ", "name": "大华股份", "market_cap_billion": 549.24, "latest_price": 17.02, "dividend_yield": 3.28, "dividend_per_share": 0.5517, "min_price_1y": 15.19, "pct_from_low": 12.1, "bb_upper": 18.46, "bb_lower": 15.45, "pct_from_upper": -7.8, "pct_from_lower": 10.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "002736.SZ", "name": "国信证券", "market_cap_billion": 1061.04, "latest_price": 10.14, "dividend_yield": 4.34, "dividend_per_share": 0.45, "min_price_1y": 9.49, "pct_from_low": 6.8, "bb_upper": 11.38, "bb_lower": 9.22, "pct_from_upper": -10.9, "pct_from_lower": 9.9, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600000.SH", "name": "浦发银行", "market_cap_billion": 3207.35, "latest_price": 9.29, "dividend_yield": 4.36, "dividend_per_share": 0.42, "min_price_1y": 8.22, "pct_from_low": 13.0, "bb_upper": 9.79, "bb_lower": 8.17, "pct_from_upper": -5.1, "pct_from_lower": 13.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600011.SH", "name": "华能国际", "market_cap_billion": 1144.39, "latest_price": 7.01, "dividend_yield": 5.49, "dividend_per_share": 0.4, "min_price_1y": 6.37, "pct_from_low": 10.1, "bb_upper": 8.02, "bb_lower": 6.1, "pct_from_upper": -12.5, "pct_from_lower": 14.9, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600015.SH", "name": "华夏银行", "market_cap_billion": 1117.23, "latest_price": 6.81, "dividend_yield": 5.98, "dividend_per_share": 0.42, "min_price_1y": 6.04, "pct_from_low": 12.7, "bb_upper": 7.11, "bb_lower": 6.11, "pct_from_upper": -4.2, "pct_from_lower": 11.4, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600016.SH", "name": "民生银行", "market_cap_billion": 1598.06, "latest_price": 3.52, "dividend_yield": 5.18, "dividend_per_share": 0.189, "min_price_1y": 3.17, "pct_from_low": 11.0, "bb_upper": 3.82, "bb_lower": 3.25, "pct_from_upper": -7.8, "pct_from_lower": 8.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600018.SH", "name": "上港集团", "market_cap_billion": 1231.51, "latest_price": 5.2, "dividend_yield": 3.69, "dividend_per_share": 0.195, "min_price_1y": 4.59, "pct_from_low": 13.2, "bb_upper": 5.24, "bb_lower": 4.61, "pct_from_upper": -0.8, "pct_from_lower": 12.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600019.SH", "name": "宝钢股份", "market_cap_billion": 1330.89, "latest_price": 5.85, "dividend_yield": 4.87, "dividend_per_share": 0.2975, "min_price_1y": 5.39, "pct_from_low": 8.5, "bb_upper": 6.45, "bb_lower": 5.33, "pct_from_upper": -9.2, "pct_from_lower": 9.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600023.SH", "name": "浙能电力", "market_cap_billion": 673.12, "latest_price": 4.96, "dividend_yield": 6.57, "dividend_per_share": 0.33, "min_price_1y": 4.64, "pct_from_low": 6.9, "bb_upper": 6.03, "bb_lower": 4.68, "pct_from_upper": -17.7, "pct_from_lower": 5.9, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600027.SH", "name": "华电国际", "market_cap_billion": 564.33, "latest_price": 4.69, "dividend_yield": 4.73, "dividend_per_share": 0.23, "min_price_1y": 4.38, "pct_from_low": 7.0, "bb_upper": 5.31, "bb_lower": 4.23, "pct_from_upper": -11.6, "pct_from_lower": 10.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600036.SH", "name": "招商银行", "market_cap_billion": 10178.73, "latest_price": 38.97, "dividend_yield": 5.0, "dividend_per_share": 2.016, "min_price_1y": 34.55, "pct_from_low": 12.8, "bb_upper": 40.0, "bb_lower": 35.13, "pct_from_upper": -2.6, "pct_from_lower": 10.9, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600050.SH", "name": "中国联通", "market_cap_billion": 1410.03, "latest_price": 4.38, "dividend_yield": 3.63, "dividend_per_share": 0.1635, "min_price_1y": 4.0, "pct_from_low": 9.5, "bb_upper": 4.66, "bb_lower": 4.06, "pct_from_upper": -6.1, "pct_from_lower": 7.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600377.SH", "name": "宁沪高速", "market_cap_billion": 624.18, "latest_price": 11.89, "dividend_yield": 3.95, "dividend_per_share": 0.49, "min_price_1y": 11.05, "pct_from_low": 7.6, "bb_upper": 12.47, "bb_lower": 11.04, "pct_from_upper": -4.6, "pct_from_lower": 7.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600519.SH", "name": "贵州茅台", "market_cap_billion": 16988.36, "latest_price": 1308.55, "dividend_yield": 3.83, "dividend_per_share": 52.0231, "min_price_1y": 1168.63, "pct_from_low": 12.0, "bb_upper": 1464.24, "bb_lower": 1140.88, "pct_from_upper": -10.6, "pct_from_lower": 14.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600585.SH", "name": "海螺水泥", "market_cap_billion": 966.23, "latest_price": 17.8, "dividend_yield": 4.65, "dividend_per_share": 0.851, "min_price_1y": 16.35, "pct_from_low": 8.9, "bb_upper": 22.85, "bb_lower": 15.52, "pct_from_upper": -22.1, "pct_from_lower": 14.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600600.SH", "name": "青岛啤酒", "market_cap_billion": 766.54, "latest_price": 53.56, "dividend_yield": 4.18, "dividend_per_share": 2.35, "min_price_1y": 49.38, "pct_from_low": 8.5, "bb_upper": 63.88, "bb_lower": 48.92, "pct_from_upper": -16.1, "pct_from_lower": 9.5, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600674.SH", "name": "川投能源", "market_cap_billion": 765.31, "latest_price": 15.01, "dividend_yield": 3.18, "dividend_per_share": 0.5, "min_price_1y": 13.3, "pct_from_low": 12.9, "bb_upper": 15.8, "bb_lower": 13.52, "pct_from_upper": -5.0, "pct_from_lower": 11.0, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600887.SH", "name": "伊利股份", "market_cap_billion": 1715.44, "latest_price": 26.32, "dividend_yield": 5.09, "dividend_per_share": 1.38, "min_price_1y": 23.96, "pct_from_low": 9.8, "bb_upper": 27.45, "bb_lower": 23.74, "pct_from_upper": -4.1, "pct_from_lower": 10.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600900.SH", "name": "长江电力", "market_cap_billion": 7108.02, "latest_price": 27.75, "dividend_yield": 3.44, "dividend_per_share": 1.0, "min_price_1y": 24.73, "pct_from_low": 12.2, "bb_upper": 28.81, "bb_lower": 24.7, "pct_from_upper": -3.7, "pct_from_lower": 12.4, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600926.SH", "name": "杭州银行", "market_cap_billion": 1189.56, "latest_price": 16.18, "dividend_yield": 4.02, "dividend_per_share": 0.66, "min_price_1y": 14.45, "pct_from_low": 12.0, "bb_upper": 17.36, "bb_lower": 14.76, "pct_from_upper": -6.8, "pct_from_lower": 9.6, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600941.SH", "name": "中国移动", "market_cap_billion": 21460.35, "latest_price": 96.45, "dividend_yield": 4.75, "dividend_per_share": 4.7037, "min_price_1y": 86.13, "pct_from_low": 12.0, "bb_upper": 99.33, "bb_lower": 87.18, "pct_from_upper": -2.9, "pct_from_lower": 10.6, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600958.SH", "name": "东方证券", "market_cap_billion": 785.09, "latest_price": 9.1, "dividend_yield": 3.43, "dividend_per_share": 0.3174, "min_price_1y": 8.62, "pct_from_low": 5.6, "bb_upper": 9.45, "bb_lower": 8.69, "pct_from_upper": -3.7, "pct_from_lower": 4.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601006.SH", "name": "大秦铁路", "market_cap_billion": 993.14, "latest_price": 4.84, "dividend_yield": 4.46, "dividend_per_share": 0.2228, "min_price_1y": 4.47, "pct_from_low": 8.4, "bb_upper": 5.4, "bb_lower": 4.51, "pct_from_upper": -10.4, "pct_from_lower": 7.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601009.SH", "name": "南京银行", "market_cap_billion": 1439.12, "latest_price": 11.28, "dividend_yield": 4.55, "dividend_per_share": 0.5292, "min_price_1y": 9.89, "pct_from_low": 14.1, "bb_upper": 11.79, "bb_lower": 10.21, "pct_from_upper": -4.3, "pct_from_lower": 10.5, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601018.SH", "name": "宁波港", "market_cap_billion": 682.85, "latest_price": 3.38, "dividend_yield": 3.42, "dividend_per_share": 0.12, "min_price_1y": 3.15, "pct_from_low": 7.3, "bb_upper": 3.98, "bb_lower": 3.07, "pct_from_upper": -15.0, "pct_from_lower": 10.1, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601077.SH", "name": "渝农商行", "market_cap_billion": 764.33, "latest_price": 6.48, "dividend_yield": 4.77, "dividend_per_share": 0.3209, "min_price_1y": 5.85, "pct_from_low": 10.8, "bb_upper": 7.36, "bb_lower": 6.1, "pct_from_upper": -11.9, "pct_from_lower": 6.1, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601166.SH", "name": "兴业银行", "market_cap_billion": 4042.11, "latest_price": 18.48, "dividend_yield": 5.58, "dividend_per_share": 1.066, "min_price_1y": 16.56, "pct_from_low": 11.6, "bb_upper": 18.96, "bb_lower": 16.59, "pct_from_upper": -2.6, "pct_from_lower": 11.4, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601169.SH", "name": "北京银行", "market_cap_billion": 1105.78, "latest_price": 5.03, "dividend_yield": 5.32, "dividend_per_share": 0.278, "min_price_1y": 4.63, "pct_from_low": 8.6, "bb_upper": 5.29, "bb_lower": 4.66, "pct_from_upper": -4.9, "pct_from_lower": 8.0, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601186.SH", "name": "中国铁建", "market_cap_billion": 870.45, "latest_price": 6.2, "dividend_yield": 4.68, "dividend_per_share": 0.3, "min_price_1y": 5.67, "pct_from_low": 9.3, "bb_upper": 6.81, "bb_lower": 5.68, "pct_from_upper": -8.9, "pct_from_lower": 9.1, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601229.SH", "name": "上海银行", "market_cap_billion": 1361.23, "latest_price": 9.3, "dividend_yield": 5.43, "dividend_per_share": 0.52, "min_price_1y": 8.47, "pct_from_low": 9.8, "bb_upper": 9.71, "bb_lower": 8.66, "pct_from_upper": -4.3, "pct_from_lower": 7.5, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601298.SH", "name": "青岛港", "market_cap_billion": 588.74, "latest_price": 8.93, "dividend_yield": 3.83, "dividend_per_share": 0.3473, "min_price_1y": 7.99, "pct_from_low": 11.8, "bb_upper": 9.5, "bb_lower": 8.02, "pct_from_upper": -6.0, "pct_from_lower": 11.4, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601318.SH", "name": "中国平安", "market_cap_billion": 10058.8, "latest_price": 53.5, "dividend_yield": 4.86, "dividend_per_share": 2.7, "min_price_1y": 47.23, "pct_from_low": 13.3, "bb_upper": 59.42, "bb_lower": 47.21, "pct_from_upper": -10.0, "pct_from_lower": 13.3, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601328.SH", "name": "交通银行", "market_cap_billion": 6406.37, "latest_price": 6.94, "dividend_yield": 4.48, "dividend_per_share": 0.3247, "min_price_1y": 6.27, "pct_from_low": 10.8, "bb_upper": 7.14, "bb_lower": 6.24, "pct_from_upper": -2.8, "pct_from_lower": 11.3, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601336.SH", "name": "新华保险", "market_cap_billion": 1961.26, "latest_price": 62.43, "dividend_yield": 4.23, "dividend_per_share": 2.66, "min_price_1y": 55.43, "pct_from_low": 12.6, "bb_upper": 66.45, "bb_lower": 56.94, "pct_from_upper": -6.0, "pct_from_lower": 9.6, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601390.SH", "name": "中国中铁", "market_cap_billion": 1135.8, "latest_price": 4.49, "dividend_yield": 3.64, "dividend_per_share": 0.1686, "min_price_1y": 4.09, "pct_from_low": 9.8, "bb_upper": 5.44, "bb_lower": 3.96, "pct_from_upper": -17.4, "pct_from_lower": 13.3, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601398.SH", "name": "工商银行", "market_cap_billion": 28369.94, "latest_price": 7.57, "dividend_yield": 3.9, "dividend_per_share": 0.3103, "min_price_1y": 6.76, "pct_from_low": 11.9, "bb_upper": 7.86, "bb_lower": 6.87, "pct_from_upper": -3.6, "pct_from_lower": 10.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601658.SH", "name": "邮储银行", "market_cap_billion": 6172.89, "latest_price": 4.97, "dividend_yield": 4.25, "dividend_per_share": 0.2183, "min_price_1y": 4.76, "pct_from_low": 4.3, "bb_upper": 5.18, "bb_lower": 4.73, "pct_from_upper": -4.1, "pct_from_lower": 5.1, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601668.SH", "name": "中国建筑", "market_cap_billion": 1966.85, "latest_price": 4.57, "dividend_yield": 5.71, "dividend_per_share": 0.2718, "min_price_1y": 4.09, "pct_from_low": 11.7, "bb_upper": 4.86, "bb_lower": 4.21, "pct_from_upper": -6.0, "pct_from_lower": 8.5, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601766.SH", "name": "中国中车", "market_cap_billion": 1785.07, "latest_price": 5.93, "dividend_yield": 5.14, "dividend_per_share": 0.32, "min_price_1y": 5.2, "pct_from_low": 14.0, "bb_upper": 6.44, "bb_lower": 5.26, "pct_from_upper": -8.0, "pct_from_lower": 12.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601818.SH", "name": "光大银行", "market_cap_billion": 1890.74, "latest_price": 3.06, "dividend_yield": 5.47, "dividend_per_share": 0.175, "min_price_1y": 2.83, "pct_from_low": 8.3, "bb_upper": 3.21, "bb_lower": 2.91, "pct_from_upper": -4.8, "pct_from_lower": 5.0, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601825.SH", "name": "沪农商行", "market_cap_billion": 844.85, "latest_price": 8.36, "dividend_yield": 4.97, "dividend_per_share": 0.435, "min_price_1y": 7.49, "pct_from_low": 11.6, "bb_upper": 9.28, "bb_lower": 7.57, "pct_from_upper": -9.9, "pct_from_lower": 10.5, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601916.SH", "name": "浙商银行", "market_cap_billion": 840.42, "latest_price": 2.93, "dividend_yield": 4.28, "dividend_per_share": 0.131, "min_price_1y": 2.63, "pct_from_low": 11.4, "bb_upper": 3.01, "bb_lower": 2.71, "pct_from_upper": -2.8, "pct_from_lower": 7.9, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601998.SH", "name": "中信银行", "market_cap_billion": 4395.97, "latest_price": 7.55, "dividend_yield": 4.82, "dividend_per_share": 0.381, "min_price_1y": 6.86, "pct_from_low": 10.1, "bb_upper": 8.45, "bb_lower": 6.85, "pct_from_upper": -10.7, "pct_from_lower": 10.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "603195.SH", "name": "公牛集团", "market_cap_billion": 761.23, "latest_price": 40.78, "dividend_yield": 4.51, "dividend_per_share": 1.9047, "min_price_1y": 36.89, "pct_from_low": 10.5, "bb_upper": 43.01, "bb_lower": 36.65, "pct_from_upper": -5.2, "pct_from_lower": 11.3, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "688009.SH", "name": "中国通号", "market_cap_billion": 542.2, "latest_price": 4.94, "dividend_yield": 3.32, "dividend_per_share": 0.17, "min_price_1y": 4.61, "pct_from_low": 7.2, "bb_upper": 5.4, "bb_lower": 4.49, "pct_from_upper": -8.4, "pct_from_lower": 10.0, "data_date": "20260803", "price_date": "20260807 08:33"}];
+var EMBED=[{"code": "000001.SZ", "name": "平安银行", "market_cap_billion": 2254.97, "latest_price": 11.27, "dividend_yield": 5.13, "dividend_per_share": 0.596, "min_price_1y": 10.05, "pct_from_low": 12.1, "bb_upper": 11.48, "bb_lower": 10.04, "pct_from_upper": -1.8, "pct_from_lower": 12.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "000157.SZ", "name": "中联重科", "market_cap_billion": 652.1, "latest_price": 7.27, "dividend_yield": 5.3, "dividend_per_share": 0.4, "min_price_1y": 6.61, "pct_from_low": 9.9, "bb_upper": 8.4, "bb_lower": 6.57, "pct_from_upper": -13.4, "pct_from_lower": 10.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "000538.SZ", "name": "云南白药", "market_cap_billion": 932.99, "latest_price": 50.69, "dividend_yield": 4.98, "dividend_per_share": 2.602, "min_price_1y": 47.0, "pct_from_low": 7.9, "bb_upper": 55.32, "bb_lower": 46.91, "pct_from_upper": -8.4, "pct_from_lower": 8.0, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "000651.SZ", "name": "格力电器", "market_cap_billion": 2294.34, "latest_price": 40.25, "dividend_yield": 7.3, "dividend_per_share": 2.9913, "min_price_1y": 36.72, "pct_from_low": 9.6, "bb_upper": 41.76, "bb_lower": 35.76, "pct_from_upper": -3.6, "pct_from_lower": 12.6, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "000895.SZ", "name": "双汇发展", "market_cap_billion": 907.39, "latest_price": 25.38, "dividend_yield": 5.54, "dividend_per_share": 1.45, "min_price_1y": 22.4, "pct_from_low": 13.3, "bb_upper": 29.05, "bb_lower": 22.11, "pct_from_upper": -12.6, "pct_from_lower": 14.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "000963.SZ", "name": "华东医药", "market_cap_billion": 501.04, "latest_price": 27.82, "dividend_yield": 3.26, "dividend_per_share": 0.9301, "min_price_1y": 26.41, "pct_from_low": 5.3, "bb_upper": 36.36, "bb_lower": 24.98, "pct_from_upper": -23.5, "pct_from_lower": 11.4, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "001965.SZ", "name": "招商公路", "market_cap_billion": 682.23, "latest_price": 9.52, "dividend_yield": 3.72, "dividend_per_share": 0.373, "min_price_1y": 8.42, "pct_from_low": 13.1, "bb_upper": 10.13, "bb_lower": 8.51, "pct_from_upper": -6.0, "pct_from_lower": 11.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "002236.SZ", "name": "大华股份", "market_cap_billion": 549.24, "latest_price": 17.02, "dividend_yield": 3.28, "dividend_per_share": 0.5517, "min_price_1y": 15.19, "pct_from_low": 12.1, "bb_upper": 18.46, "bb_lower": 15.45, "pct_from_upper": -7.8, "pct_from_lower": 10.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "002736.SZ", "name": "国信证券", "market_cap_billion": 1061.04, "latest_price": 10.14, "dividend_yield": 4.34, "dividend_per_share": 0.45, "min_price_1y": 9.49, "pct_from_low": 6.8, "bb_upper": 11.38, "bb_lower": 9.22, "pct_from_upper": -10.9, "pct_from_lower": 9.9, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600000.SH", "name": "浦发银行", "market_cap_billion": 3207.35, "latest_price": 9.29, "dividend_yield": 4.36, "dividend_per_share": 0.42, "min_price_1y": 8.22, "pct_from_low": 13.0, "bb_upper": 9.79, "bb_lower": 8.17, "pct_from_upper": -5.1, "pct_from_lower": 13.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600011.SH", "name": "华能国际", "market_cap_billion": 1144.39, "latest_price": 7.01, "dividend_yield": 5.49, "dividend_per_share": 0.4, "min_price_1y": 6.37, "pct_from_low": 10.1, "bb_upper": 8.02, "bb_lower": 6.1, "pct_from_upper": -12.5, "pct_from_lower": 14.9, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600015.SH", "name": "华夏银行", "market_cap_billion": 1117.23, "latest_price": 6.81, "dividend_yield": 5.98, "dividend_per_share": 0.42, "min_price_1y": 6.04, "pct_from_low": 12.7, "bb_upper": 7.11, "bb_lower": 6.11, "pct_from_upper": -4.2, "pct_from_lower": 11.4, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600016.SH", "name": "民生银行", "market_cap_billion": 1598.06, "latest_price": 3.52, "dividend_yield": 5.18, "dividend_per_share": 0.189, "min_price_1y": 3.17, "pct_from_low": 11.0, "bb_upper": 3.82, "bb_lower": 3.25, "pct_from_upper": -7.8, "pct_from_lower": 8.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600018.SH", "name": "上港集团", "market_cap_billion": 1231.51, "latest_price": 5.2, "dividend_yield": 3.69, "dividend_per_share": 0.195, "min_price_1y": 4.59, "pct_from_low": 13.2, "bb_upper": 5.24, "bb_lower": 4.61, "pct_from_upper": -0.8, "pct_from_lower": 12.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600019.SH", "name": "宝钢股份", "market_cap_billion": 1330.89, "latest_price": 5.85, "dividend_yield": 4.87, "dividend_per_share": 0.2975, "min_price_1y": 5.39, "pct_from_low": 8.5, "bb_upper": 6.45, "bb_lower": 5.33, "pct_from_upper": -9.2, "pct_from_lower": 9.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600023.SH", "name": "浙能电力", "market_cap_billion": 673.12, "latest_price": 4.96, "dividend_yield": 6.57, "dividend_per_share": 0.33, "min_price_1y": 4.64, "pct_from_low": 6.9, "bb_upper": 6.03, "bb_lower": 4.68, "pct_from_upper": -17.7, "pct_from_lower": 5.9, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600027.SH", "name": "华电国际", "market_cap_billion": 564.33, "latest_price": 4.69, "dividend_yield": 4.73, "dividend_per_share": 0.23, "min_price_1y": 4.38, "pct_from_low": 7.0, "bb_upper": 5.31, "bb_lower": 4.23, "pct_from_upper": -11.6, "pct_from_lower": 10.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600036.SH", "name": "招商银行", "market_cap_billion": 10178.73, "latest_price": 38.97, "dividend_yield": 5.0, "dividend_per_share": 2.016, "min_price_1y": 34.55, "pct_from_low": 12.8, "bb_upper": 40.0, "bb_lower": 35.13, "pct_from_upper": -2.6, "pct_from_lower": 10.9, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600050.SH", "name": "中国联通", "market_cap_billion": 1410.03, "latest_price": 4.38, "dividend_yield": 3.63, "dividend_per_share": 0.1635, "min_price_1y": 4.0, "pct_from_low": 9.5, "bb_upper": 4.66, "bb_lower": 4.06, "pct_from_upper": -6.1, "pct_from_lower": 7.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600377.SH", "name": "宁沪高速", "market_cap_billion": 624.18, "latest_price": 11.89, "dividend_yield": 3.95, "dividend_per_share": 0.49, "min_price_1y": 11.05, "pct_from_low": 7.6, "bb_upper": 12.47, "bb_lower": 11.04, "pct_from_upper": -4.6, "pct_from_lower": 7.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600519.SH", "name": "贵州茅台", "market_cap_billion": 16988.36, "latest_price": 1308.55, "dividend_yield": 3.83, "dividend_per_share": 52.0231, "min_price_1y": 1168.63, "pct_from_low": 12.0, "bb_upper": 1464.24, "bb_lower": 1140.88, "pct_from_upper": -10.6, "pct_from_lower": 14.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600585.SH", "name": "海螺水泥", "market_cap_billion": 966.23, "latest_price": 17.8, "dividend_yield": 4.65, "dividend_per_share": 0.851, "min_price_1y": 16.35, "pct_from_low": 8.9, "bb_upper": 22.85, "bb_lower": 15.52, "pct_from_upper": -22.1, "pct_from_lower": 14.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600600.SH", "name": "青岛啤酒", "market_cap_billion": 766.54, "latest_price": 53.56, "dividend_yield": 4.18, "dividend_per_share": 2.35, "min_price_1y": 49.38, "pct_from_low": 8.5, "bb_upper": 63.88, "bb_lower": 48.92, "pct_from_upper": -16.1, "pct_from_lower": 9.5, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600674.SH", "name": "川投能源", "market_cap_billion": 765.31, "latest_price": 15.01, "dividend_yield": 3.18, "dividend_per_share": 0.5, "min_price_1y": 13.3, "pct_from_low": 12.9, "bb_upper": 15.8, "bb_lower": 13.52, "pct_from_upper": -5.0, "pct_from_lower": 11.0, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600887.SH", "name": "伊利股份", "market_cap_billion": 1715.44, "latest_price": 26.32, "dividend_yield": 5.09, "dividend_per_share": 1.38, "min_price_1y": 23.96, "pct_from_low": 9.8, "bb_upper": 27.45, "bb_lower": 23.74, "pct_from_upper": -4.1, "pct_from_lower": 10.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600900.SH", "name": "长江电力", "market_cap_billion": 7108.02, "latest_price": 27.75, "dividend_yield": 3.44, "dividend_per_share": 1.0, "min_price_1y": 24.73, "pct_from_low": 12.2, "bb_upper": 28.81, "bb_lower": 24.7, "pct_from_upper": -3.7, "pct_from_lower": 12.4, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600926.SH", "name": "杭州银行", "market_cap_billion": 1189.56, "latest_price": 16.18, "dividend_yield": 4.02, "dividend_per_share": 0.66, "min_price_1y": 14.45, "pct_from_low": 12.0, "bb_upper": 17.36, "bb_lower": 14.76, "pct_from_upper": -6.8, "pct_from_lower": 9.6, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600941.SH", "name": "中国移动", "market_cap_billion": 21460.35, "latest_price": 96.45, "dividend_yield": 4.75, "dividend_per_share": 4.7037, "min_price_1y": 86.13, "pct_from_low": 12.0, "bb_upper": 99.33, "bb_lower": 87.18, "pct_from_upper": -2.9, "pct_from_lower": 10.6, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "600958.SH", "name": "东方证券", "market_cap_billion": 785.09, "latest_price": 9.1, "dividend_yield": 3.43, "dividend_per_share": 0.3174, "min_price_1y": 8.62, "pct_from_low": 5.6, "bb_upper": 9.45, "bb_lower": 8.69, "pct_from_upper": -3.7, "pct_from_lower": 4.7, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601006.SH", "name": "大秦铁路", "market_cap_billion": 993.14, "latest_price": 4.84, "dividend_yield": 4.46, "dividend_per_share": 0.2228, "min_price_1y": 4.47, "pct_from_low": 8.4, "bb_upper": 5.4, "bb_lower": 4.51, "pct_from_upper": -10.4, "pct_from_lower": 7.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601009.SH", "name": "南京银行", "market_cap_billion": 1439.12, "latest_price": 11.28, "dividend_yield": 4.55, "dividend_per_share": 0.5292, "min_price_1y": 9.89, "pct_from_low": 14.1, "bb_upper": 11.79, "bb_lower": 10.21, "pct_from_upper": -4.3, "pct_from_lower": 10.5, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601018.SH", "name": "宁波港", "market_cap_billion": 682.85, "latest_price": 3.38, "dividend_yield": 3.42, "dividend_per_share": 0.12, "min_price_1y": 3.15, "pct_from_low": 7.3, "bb_upper": 3.98, "bb_lower": 3.07, "pct_from_upper": -15.0, "pct_from_lower": 10.1, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601077.SH", "name": "渝农商行", "market_cap_billion": 764.33, "latest_price": 6.48, "dividend_yield": 4.77, "dividend_per_share": 0.3209, "min_price_1y": 5.85, "pct_from_low": 10.8, "bb_upper": 7.36, "bb_lower": 6.1, "pct_from_upper": -11.9, "pct_from_lower": 6.1, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601166.SH", "name": "兴业银行", "market_cap_billion": 4042.11, "latest_price": 18.48, "dividend_yield": 5.58, "dividend_per_share": 1.066, "min_price_1y": 16.56, "pct_from_low": 11.6, "bb_upper": 18.96, "bb_lower": 16.59, "pct_from_upper": -2.6, "pct_from_lower": 11.4, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601169.SH", "name": "北京银行", "market_cap_billion": 1105.78, "latest_price": 5.03, "dividend_yield": 5.32, "dividend_per_share": 0.278, "min_price_1y": 4.63, "pct_from_low": 8.6, "bb_upper": 5.29, "bb_lower": 4.66, "pct_from_upper": -4.9, "pct_from_lower": 8.0, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601186.SH", "name": "中国铁建", "market_cap_billion": 870.45, "latest_price": 6.2, "dividend_yield": 4.68, "dividend_per_share": 0.3, "min_price_1y": 5.67, "pct_from_low": 9.3, "bb_upper": 6.81, "bb_lower": 5.68, "pct_from_upper": -8.9, "pct_from_lower": 9.1, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601229.SH", "name": "上海银行", "market_cap_billion": 1361.23, "latest_price": 9.3, "dividend_yield": 5.43, "dividend_per_share": 0.52, "min_price_1y": 8.47, "pct_from_low": 9.8, "bb_upper": 9.71, "bb_lower": 8.66, "pct_from_upper": -4.3, "pct_from_lower": 7.5, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601298.SH", "name": "青岛港", "market_cap_billion": 588.74, "latest_price": 8.93, "dividend_yield": 3.83, "dividend_per_share": 0.3473, "min_price_1y": 7.99, "pct_from_low": 11.8, "bb_upper": 9.5, "bb_lower": 8.02, "pct_from_upper": -6.0, "pct_from_lower": 11.4, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601318.SH", "name": "中国平安", "market_cap_billion": 10058.8, "latest_price": 53.5, "dividend_yield": 4.86, "dividend_per_share": 2.7, "min_price_1y": 47.23, "pct_from_low": 13.3, "bb_upper": 59.42, "bb_lower": 47.21, "pct_from_upper": -10.0, "pct_from_lower": 13.3, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601328.SH", "name": "交通银行", "market_cap_billion": 6406.37, "latest_price": 6.94, "dividend_yield": 4.48, "dividend_per_share": 0.3247, "min_price_1y": 6.27, "pct_from_low": 10.8, "bb_upper": 7.14, "bb_lower": 6.24, "pct_from_upper": -2.8, "pct_from_lower": 11.3, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601336.SH", "name": "新华保险", "market_cap_billion": 1961.26, "latest_price": 62.43, "dividend_yield": 4.23, "dividend_per_share": 2.66, "min_price_1y": 55.43, "pct_from_low": 12.6, "bb_upper": 66.45, "bb_lower": 56.94, "pct_from_upper": -6.0, "pct_from_lower": 9.6, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601390.SH", "name": "中国中铁", "market_cap_billion": 1135.8, "latest_price": 4.49, "dividend_yield": 3.64, "dividend_per_share": 0.1686, "min_price_1y": 4.09, "pct_from_low": 9.8, "bb_upper": 5.44, "bb_lower": 3.96, "pct_from_upper": -17.4, "pct_from_lower": 13.3, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601398.SH", "name": "工商银行", "market_cap_billion": 28369.94, "latest_price": 7.57, "dividend_yield": 3.9, "dividend_per_share": 0.3103, "min_price_1y": 6.76, "pct_from_low": 11.9, "bb_upper": 7.86, "bb_lower": 6.87, "pct_from_upper": -3.6, "pct_from_lower": 10.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601658.SH", "name": "邮储银行", "market_cap_billion": 6172.89, "latest_price": 4.97, "dividend_yield": 4.25, "dividend_per_share": 0.2183, "min_price_1y": 4.76, "pct_from_low": 4.3, "bb_upper": 5.18, "bb_lower": 4.73, "pct_from_upper": -4.1, "pct_from_lower": 5.1, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601668.SH", "name": "中国建筑", "market_cap_billion": 1966.85, "latest_price": 4.57, "dividend_yield": 5.71, "dividend_per_share": 0.2718, "min_price_1y": 4.09, "pct_from_low": 11.7, "bb_upper": 4.86, "bb_lower": 4.21, "pct_from_upper": -6.0, "pct_from_lower": 8.5, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601766.SH", "name": "中国中车", "market_cap_billion": 1785.07, "latest_price": 5.93, "dividend_yield": 5.14, "dividend_per_share": 0.32, "min_price_1y": 5.2, "pct_from_low": 14.0, "bb_upper": 6.44, "bb_lower": 5.26, "pct_from_upper": -8.0, "pct_from_lower": 12.8, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601818.SH", "name": "光大银行", "market_cap_billion": 1890.74, "latest_price": 3.06, "dividend_yield": 5.47, "dividend_per_share": 0.175, "min_price_1y": 2.83, "pct_from_low": 8.3, "bb_upper": 3.21, "bb_lower": 2.91, "pct_from_upper": -4.8, "pct_from_lower": 5.0, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601825.SH", "name": "沪农商行", "market_cap_billion": 844.85, "latest_price": 8.36, "dividend_yield": 4.97, "dividend_per_share": 0.435, "min_price_1y": 7.49, "pct_from_low": 11.6, "bb_upper": 9.28, "bb_lower": 7.57, "pct_from_upper": -9.9, "pct_from_lower": 10.5, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601916.SH", "name": "浙商银行", "market_cap_billion": 840.42, "latest_price": 2.93, "dividend_yield": 4.28, "dividend_per_share": 0.131, "min_price_1y": 2.63, "pct_from_low": 11.4, "bb_upper": 3.01, "bb_lower": 2.71, "pct_from_upper": -2.8, "pct_from_lower": 7.9, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "601998.SH", "name": "中信银行", "market_cap_billion": 4395.97, "latest_price": 7.55, "dividend_yield": 4.82, "dividend_per_share": 0.381, "min_price_1y": 6.86, "pct_from_low": 10.1, "bb_upper": 8.45, "bb_lower": 6.85, "pct_from_upper": -10.7, "pct_from_lower": 10.2, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "603195.SH", "name": "公牛集团", "market_cap_billion": 761.23, "latest_price": 40.78, "dividend_yield": 4.51, "dividend_per_share": 1.9047, "min_price_1y": 36.89, "pct_from_low": 10.5, "bb_upper": 43.01, "bb_lower": 36.65, "pct_from_upper": -5.2, "pct_from_lower": 11.3, "data_date": "20260803", "price_date": "20260807 08:33"}, {"code": "688009.SH", "name": "中国通号", "market_cap_billion": 542.2, "latest_price": 4.94, "dividend_yield": 3.32, "dividend_per_share": 0.17, "min_price_1y": 4.61, "pct_from_low": 7.2, "bb_upper": 5.4, "bb_lower": 4.49, "pct_from_upper": -8.4, "pct_from_lower": 10.0, "data_date": "20260803", "price_date": "20260807 08:33"}];;
 
 // ════════════════════  Data Engine  ════════════════════
 var D={
@@ -117,7 +117,6 @@ var D={
 
   async load(base){
     D._stocks=[]; D._loaded=false;
-    // 1. Render EMBED data immediately (no waiting for API)
     if(typeof EMBED!=='undefined' && EMBED.length>0){
       D._stocks=EMBED; D._loaded=true;
       document.getElementById('metaSource').textContent='Tushare+Baostock';
@@ -125,7 +124,6 @@ var D={
       D._updateDates();
       R();
     }
-    // 2. Background: try API for fresher data
     if(!base) base = D._detectApi();
     try{
       let r=await fetch(base+'/api/data',{signal:AbortSignal.timeout(15000)});
@@ -149,13 +147,10 @@ var D={
     var dd=(s.data_date||'');
     var ddStr=dd.length===8?dd.substr(0,4)+'-'+dd.substr(4,2)+'-'+dd.substr(6,2):dd;
     var pd=(s.price_date||'');
-    // price_date may include time like '20260807 14:30'
     var pdStr;
-    if(pd.length>=13){
-      pdStr=pd.substr(0,4)+'-'+pd.substr(4,2)+'-'+pd.substr(6,2)+' '+pd.substr(9);
-    }else if(pd.length===8){
-      pdStr=pd.substr(0,4)+'-'+pd.substr(4,2)+'-'+pd.substr(6,2);
-    }else{pdStr=ddStr}
+    if(pd.length>=13){pdStr=pd.substr(0,4)+'-'+pd.substr(4,2)+'-'+pd.substr(6,2)+' '+pd.substr(9);}
+    else if(pd.length===8){pdStr=pd.substr(0,4)+'-'+pd.substr(4,2)+'-'+pd.substr(6,2);}
+    else{pdStr=ddStr}
     document.getElementById('metaDate').textContent='Div: '+ddStr+' | Price: '+pdStr;
   },
 
@@ -185,54 +180,180 @@ var D={
   }
 };
 
-// Helper: calculate target prices for dividend yields
 function targetPrices(dps){
   if(!dps || dps<=0) return {t6:'--',t55:'--',t5:'--',t45:'--'};
-  return {
-    t6: (dps/0.06).toFixed(2),
-    t55:(dps/0.055).toFixed(2),
-    t5: (dps/0.05).toFixed(2),
-    t45:(dps/0.045).toFixed(2)
-  };
+  return {t6:(dps/0.06).toFixed(2),t55:(dps/0.055).toFixed(2),t5:(dps/0.05).toFixed(2),t45:(dps/0.045).toFixed(2)};
+}
+
+// ════════════════════  Mini K-line Chart  ════════════════════
+function drawChart(canvas, stock){
+  var phRaw=stock.price_history;
+  if(!phRaw) return;
+  var closes=[];
+  try{closes=typeof phRaw==='string'?JSON.parse(phRaw):phRaw;}catch(e){return;}
+  if(!closes.length || closes.length<20) return;
+
+  var bbU=[], bbM=[], bbL=[];
+  try{
+    bbU=typeof stock.bb_daily_upper==='string'?JSON.parse(stock.bb_daily_upper):(stock.bb_daily_upper||[]);
+    bbM=typeof stock.bb_daily_mid==='string'?JSON.parse(stock.bb_daily_mid):(stock.bb_daily_mid||[]);
+    bbL=typeof stock.bb_daily_lower==='string'?JSON.parse(stock.bb_daily_lower):(stock.bb_daily_lower||[]);
+  }catch(e){}
+
+  var W=canvas.parentElement.clientWidth-32;
+  var H=104, dpr=window.devicePixelRatio||1;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+
+  // Target price lines
+  var dps=stock.dividend_per_share, targets=[];
+  if(dps && dps>0){
+    targets=[
+      {label:'6.0%',price:dps/0.06,color:'rgba(251,146,60,0.7)'},
+      {label:'5.5%',price:dps/0.055,color:'rgba(167,139,250,0.7)'},
+      {label:'5.0%',price:dps/0.05,color:'rgba(34,211,238,0.7)'},
+      {label:'4.5%',price:dps/0.045,color:'rgba(251,113,133,0.7)'},
+    ];
+  }
+
+  var allVals=closes.concat(bbU.filter(function(v){return v!=null}),bbM.filter(function(v){return v!=null}),bbL.filter(function(v){return v!=null}));
+  targets.forEach(function(t){allVals.push(t.price);});
+  var min=Math.min.apply(null,allVals), max=Math.max.apply(null,allVals);
+  var range=max-min || 1, pad=range*0.1;
+  min-=pad; max+=pad; range=max-min;
+
+  var xScale=function(i){return (i/(closes.length-1))*(W-2)+1;};
+  var yScale=function(v){return H-2-((v-min)/range)*(H-4);};
+
+  // BB band fill
+  if(bbU.length && bbL.length){
+    ctx.beginPath();
+    var started=false;
+    for(var i=0;i<closes.length;i++){
+      var u=bbU[i], l=bbL[i];
+      if(u==null||l==null) continue;
+      var x=xScale(i);
+      if(!started){ctx.moveTo(x,yScale(u));started=true;}
+      else{ctx.lineTo(x,yScale(u));}
+    }
+    for(var i=closes.length-1;i>=0;i--){
+      var l=bbL[i]; if(l==null) continue;
+      ctx.lineTo(xScale(i),yScale(l));
+    }
+    ctx.closePath();
+    ctx.fillStyle='rgba(99,102,241,0.16)';
+    ctx.fill();
+  }
+
+  // BB lines
+  function drawBB(arr,color,dash){
+    if(!arr.length) return;
+    ctx.beginPath();
+    ctx.strokeStyle=color; ctx.lineWidth=0.7;
+    if(dash) ctx.setLineDash([3,3]); else ctx.setLineDash([]);
+    var started=false;
+    for(var i=0;i<arr.length;i++){
+      if(arr[i]==null) continue;
+      var x=xScale(i), y=yScale(arr[i]);
+      if(!started){ctx.moveTo(x,y);started=true;}
+      else{ctx.lineTo(x,y);}
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  drawBB(bbU,'rgba(168,85,247,0.55)',true);
+  drawBB(bbM,'rgba(96,165,250,0.5)',false);
+  drawBB(bbL,'rgba(168,85,247,0.55)',true);
+
+  // Price line
+  ctx.beginPath();
+  ctx.strokeStyle='#22c55e'; ctx.lineWidth=0.7;
+  for(var i=0;i<closes.length;i++){
+    var x=xScale(i), y=yScale(closes[i]);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // Current price dot
+  var lastX=xScale(closes.length-1), lastY=yScale(closes[closes.length-1]);
+  ctx.beginPath(); ctx.arc(lastX,lastY,2.5,0,Math.PI*2);
+  ctx.fillStyle='#22c55e'; ctx.fill();
+  ctx.beginPath(); ctx.arc(lastX,lastY,5,0,Math.PI*2);
+  ctx.strokeStyle='rgba(34,197,94,0.3)'; ctx.lineWidth=1; ctx.stroke();
+
+  // Current price vertical dashed line
+  ctx.beginPath();
+  ctx.strokeStyle='rgba(34,197,94,0.55)'; ctx.lineWidth=0.7;
+  ctx.setLineDash([3,3]);
+  ctx.moveTo(lastX,0); ctx.lineTo(lastX,H);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Target price horizontal dashed lines
+  targets.forEach(function(t){
+    var y=yScale(t.price);
+    ctx.beginPath();
+    ctx.strokeStyle=t.color; ctx.lineWidth=0.7;
+    ctx.setLineDash([3,3]);
+    ctx.moveTo(0,y); ctx.lineTo(W,y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+}
+
+var _chartData=[];
+function drawAllCharts(){
+  var cards=document.querySelectorAll('.stock-card');
+  for(var i=0;i<cards.length;i++){
+    var canvas=cards[i].querySelector('canvas');
+    if(!canvas) continue;
+    var stock=_chartData[i];
+    if(stock) drawChart(canvas,stock);
+  }
 }
 
 // ════════════════════  Render Engine  ════════════════════
 var V={
   _view:'grid',
-  switch(v){V._view=v;document.querySelectorAll('.btn-view').forEach((b,i)=>b.classList.toggle('active',i===(v==='grid'?0:1)));document.getElementById('gv').classList.toggle('active',v==='grid');document.getElementById('tv').classList.toggle('active',v==='table')},
+  switch(v){V._view=v;document.querySelectorAll('.btn-view').forEach(function(b,i){b.classList.toggle('active',i===(v==='grid'?0:1))});document.getElementById('gv').classList.toggle('active',v==='grid');document.getElementById('tv').classList.toggle('active',v==='table');if(v==='grid') setTimeout(drawAllCharts,50);},
 
   grid(arr){
-    return arr.map(s=>{
-      let d=s.dividend_yield, cl=d>=7?'hi':(d>=6?'mi':'lo');
-      let p=s.pct_from_low, pc=(p!=null)?(p<10?'pct-lo':(p<30?'pct-mi':'pct-hi')):'',
+    return arr.map(function(s){
+      var d=s.dividend_yield, cl=d>=7?'hi':(d>=6?'mi':'lo');
+      var p=s.pct_from_low, pc=(p!=null)?(p<10?'pct-lo':(p<30?'pct-mi':'pct-hi')):'',
         ps=(p!=null)?'+'+p.toFixed(1)+'%':'--';
-      let m1=(s.min_price_1y!=null)?s.min_price_1y.toFixed(2):'--';
-      let t=targetPrices(s.dividend_per_share);
-      let mc=(s.market_cap_billion>0)?H.n(s.market_cap_billion,0)+'B':'--';
+      var m1=(s.min_price_1y!=null)?s.min_price_1y.toFixed(2):'--';
+      var t=targetPrices(s.dividend_per_share);
+      var mc=(s.market_cap_billion>0)?H.n(s.market_cap_billion,0)+'B':'--';
+      var hasChart=s.price_history?true:false;
+      var footer=hasChart?
+        '<div class="card-chart"><canvas></canvas></div>':
+        '<div class="card-chart"><div class="chart-fallback"><div class="bar-bg"><div class="bar-fill" style="width:'+Math.min(d/8*100,100)+'%"></div></div>'+d.toFixed(1)+'%</div></div>';
       return '<div class="stock-card '+cl+'" onclick="H.flash(this)">'+
         '<div class="card-header"><span class="card-name">'+H.e(s.name)+'</span><span class="card-code">'+H.e(s.code)+'</span></div>'+
         '<div class="card-body">'+
           H.m('Div Yield',d.toFixed(2)+'%','green')+H.m('Price',s.latest_price.toFixed(2))+
           H.m('1Y Low',m1)+H.m('From Low',ps,pc)+
           H.m('BB Low / %',(s.bb_lower!=null?s.bb_lower.toFixed(2):'--')+' / '+(s.pct_from_lower!=null?'+'+s.pct_from_lower.toFixed(1)+'%':'--'))+H.m('Mkt Cap',mc)+
-          '<div class="card-target"><div class="t-row"><b>6.0%</b><span>'+t.t6+'</span></div><div class="t-row"><b>5.5%</b><span>'+t.t55+'</span></div><div class="t-row"><b>5.0%</b><span>'+t.t5+'</span></div><div class="t-row"><b>4.5%</b><span>'+t.t45+'</span></div></div>'+
-        '</div>'+
-        '<div class="card-footer"><div class="bar-bg"><div class="bar-fill" style="width:'+Math.min(d/8*100,100)+'%"></div></div>'+d.toFixed(1)+'%</div></div>';
+          '<div class="card-target"><span class="t-item">6.0%/'+t.t6+'<i class="t-dash" style="border-top-color:rgba(251,146,60,.85)"></i></span><span class="t-item">5.5%/'+t.t55+'<i class="t-dash" style="border-top-color:rgba(167,139,250,.85)"></i></span><span class="t-item">5.0%/'+t.t5+'<i class="t-dash" style="border-top-color:rgba(34,211,238,.85)"></i></span><span class="t-item">4.5%/'+t.t45+'<i class="t-dash" style="border-top-color:rgba(251,113,133,.85)"></i></span></div>'+
+        '</div>'+footer+'</div>';
     }).join('');
   },
 
   table(arr){
-    return arr.map((s,i)=>{
-      let d=s.dividend_yield, dc=d>=7?'#22c55e':(d>=6?'#eab308':'#94a3b8'), dcl=d>=7?'hi':(d>=6?'mi':'lo');
-      let p=s.pct_from_low, pc=(p!=null)?(p<10?'#22c55e':(p<30?'#eab308':'#ef4444')):'#94a3b8',
+    return arr.map(function(s,i){
+      var d=s.dividend_yield, dc=d>=7?'#22c55e':(d>=6?'#eab308':'#94a3b8'), dcl=d>=7?'hi':(d>=6?'mi':'lo');
+      var p=s.pct_from_low, pc=(p!=null)?(p<10?'#22c55e':(p<30?'#eab308':'#ef4444')):'#94a3b8',
         pcl=(p!=null)?(p<10?'lo':(p<30?'mi':'hi')):'',
         ps=(p!=null)?'+'+p.toFixed(1)+'%':'--';
-      let m1=(s.min_price_1y!=null)?s.min_price_1y.toFixed(2):'--';
-      let dps=(s.dividend_per_share>0)?s.dividend_per_share.toFixed(4):'--';
-      let t=targetPrices(s.dividend_per_share);
-      let mc=(s.market_cap_billion>0)?H.n(s.market_cap_billion,0)+'B':'--';
-      let bbLo=(s.bb_lower!=null)?s.bb_lower.toFixed(2):'--';
-      let pBL=s.pct_from_lower, pbc=(pBL!=null)?(pBL<10?'pct-lo':(pBL<25?'pct-mi':'pct-hi')):'',
+      var m1=(s.min_price_1y!=null)?s.min_price_1y.toFixed(2):'--';
+      var dps=(s.dividend_per_share>0)?s.dividend_per_share.toFixed(4):'--';
+      var t=targetPrices(s.dividend_per_share);
+      var mc=(s.market_cap_billion>0)?H.n(s.market_cap_billion,0)+'B':'--';
+      var bbLo=(s.bb_lower!=null)?s.bb_lower.toFixed(2):'--';
+      var pBL=s.pct_from_lower, pbc=(pBL!=null)?(pBL<10?'pct-lo':(pBL<25?'pct-mi':'pct-hi')):'',
         pbs=(pBL!=null)?'+'+pBL.toFixed(1)+'%':'--';
       return '<tr onclick="H.flash(this)">'+
         '<td class="c0">'+(i+1)+'</td>'+
@@ -255,11 +376,11 @@ var V={
 
 // ════════════════════  Helpers  ════════════════════
 var H={
-  e:s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'),
-  n:(v,d)=>(Number(v)||0).toFixed(d),
-  m:function(l,v,c){return'<div class="card-m"><span class="cml">'+l+'</span><span class="cmv'+(c?' '+c:'')+'">'+H.e(v)+'</span></div>'},
-  flash:function(el){el.style.background='rgba(99,102,241,.12)';setTimeout(function(){el.style.background=''},600)},
-  toast:function(t,m){var x=document.createElement('div');x.className='toast '+t+' show';x.textContent=m;document.body.appendChild(x);setTimeout(function(){x.classList.remove('show');setTimeout(function(){x.remove()},400)},3000)}
+  e:function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');},
+  n:function(v,d){return (Number(v)||0).toFixed(d);},
+  m:function(l,v,c){return'<div class="card-m"><span class="cml">'+l+'</span><span class="cmv'+(c?' '+c:'')+'">'+H.e(v)+'</span></div>';},
+  flash:function(el){el.style.background='rgba(99,102,241,.12)';setTimeout(function(){el.style.background='';},600);},
+  toast:function(t,m){var x=document.createElement('div');x.className='toast '+t+' show';x.textContent=m;document.body.appendChild(x);setTimeout(function(){x.classList.remove('show');setTimeout(function(){x.remove();},400);},3000);}
 };
 
 // ════════════════════  Render  ════════════════════
@@ -267,14 +388,16 @@ function R(){
   if(!D._loaded){document.getElementById('gv').innerHTML='';document.getElementById('tb').innerHTML='';return}
   var q=(document.getElementById('q').value||'').toLowerCase();
   var s=document.getElementById('sort').value;
-  var arr=D.sort([...D._stocks].filter(function(x){return!q||x.name.toLowerCase().indexOf(q)>=0||x.code.toLowerCase().indexOf(q)>=0}),s);
+  var arr=D.sort([...D._stocks].filter(function(x){return!q||x.name.toLowerCase().indexOf(q)>=0||x.code.toLowerCase().indexOf(q)>=0;}),s);
 
-  if(arr.length===0&&D._stocks.length===0){document.getElementById('empty').style.display='block'}
-  else{document.getElementById('empty').style.display='none'}
+  if(arr.length===0&&D._stocks.length===0){document.getElementById('empty').style.display='block';}
+  else{document.getElementById('empty').style.display='none';}
 
   document.getElementById('gv').innerHTML=V.grid(arr);
   document.getElementById('tb').innerHTML=V.table(arr);
   document.getElementById('rc').textContent='Showing '+arr.length+' / '+D._stocks.length;
+  _chartData=arr;
+  if(V._view==='grid') setTimeout(drawAllCharts,50);
 }
 
 // ════════════════════  update_dv&val  ════════════════════
@@ -284,9 +407,9 @@ async function U(){
   try{
     var r=await fetch(api+'/api/update',{method:'POST',signal:AbortSignal.timeout(300000)});
     var j=await r.json();
-    if(j.ok){H.toast('ok',j.message);setTimeout(function(){D.load(api)},2000)}
-    else{H.toast('err',j.error||'Update failed');if(j.error&&j.error.indexOf('TUSHARE_TOKEN')>=0) _showToken()}
-  }catch(e){H.toast('err','Connection failed: '+e.message);if(window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1') _showToken()}
+    if(j.ok){H.toast('ok',j.message);setTimeout(function(){D.load(api);},2000);}
+    else{H.toast('err',j.error||'Update failed');if(j.error&&j.error.indexOf('TUSHARE_TOKEN')>=0) _showToken();}
+  }catch(e){H.toast('err','Connection failed: '+e.message);if(window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1') _showToken();}
   btn.disabled=false;btn.textContent='update_dv&val';
 }
 
@@ -325,15 +448,14 @@ async function P(){
   var btn=document.getElementById('btnP'), api=D._detectApi();
   btn.disabled=true;btn.textContent='Updating...';
   try{
-    var r=await fetch(api+'/api/refresh_prices',{method:'POST',signal:AbortSignal.timeout(120000)});
+    var r=await fetch(api+'/api/refresh_prices',{method:'POST',signal:AbortSignal.timeout(300000)});
     var j=await r.json();
-    if(j.ok){D._stocks=j.stocks; D._loaded=true; D._updateMeta(); D._updateDates(); R(); H.toast('ok',j.count+' stocks updated')}
-    else{H.toast('err',j.error||'Update failed')}
-  }catch(e){H.toast('err','Connection failed: '+e.message)}
+    if(j.ok){D._stocks=j.stocks; D._loaded=true; D._updateMeta(); D._updateDates(); R(); H.toast('ok',j.count+' stocks updated');}
+    else{H.toast('err',j.error||'Update failed');}
+  }catch(e){H.toast('err','Connection failed: '+e.message);}
   btn.disabled=false;btn.textContent='Update Price';
 }
 
-// ════════════════════  Token help  ════════════════════
 function _showToken(){
   H.toast('err','TUSHARE_TOKEN not configured. Add it to .env and restart the server.');
 }
