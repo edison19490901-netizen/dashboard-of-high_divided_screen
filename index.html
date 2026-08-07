@@ -39,10 +39,10 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:
 .cml{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .cmv{font-size:.9rem;font-weight:600;font-family:monospace}.cmv.green{color:var(--green);font-size:1rem}
 .cmv.pct-lo{color:var(--green)}.cmv.pct-mi{color:var(--yellow)}.cmv.pct-hi{color:var(--red)}
-.card-target{grid-column:1/-1;padding:4px 0;font-size:.75rem;display:flex;flex-direction:column;gap:2px;border-top:1px solid rgba(255,255,255,.06)}
-.card-target .t-row{display:flex;justify-content:space-between;font-family:monospace}
-.card-target .t-row b{color:#a5b4fc;font-weight:600}
-.card-target .t-row span{color:#cbd5e1;font-weight:500}
+.card-target{grid-column:1/-1;padding:4px 0;display:flex;flex-direction:column;gap:2px;border-top:1px solid rgba(255,255,255,.06)}
+.card-target .t-row{display:grid;grid-template-columns:1fr 1fr;font-family:monospace;font-size:.78rem}
+.card-target .t-row b{color:#a5b4fc;font-weight:600;text-align:left}
+.card-target .t-row span{color:#cbd5e1;font-weight:500;text-align:left}
 .card-footer{padding:6px 16px 10px;display:flex;align-items:center;gap:7px}
 .bar-bg{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
 .bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width .6s}
@@ -91,13 +91,8 @@ th,td{padding:4px 3px;font-size:.65rem}th:nth-child(5),td.c5,th:nth-child(9),td.
 </div>
 
 <div class="source-bar">
-<span></span>
+<span id="formulaText" style="font-size:.73rem;color:var(--muted);display:none">Target Prices = DPS &divide; Target Div Yield &nbsp;|&nbsp; Columns show what price yields 6% / 5.5% / 5% / 4.5% dividend at current DPS</span>
 <span class="result-count" id="rc">--</span>
-</div>
-
-<div id="formula" style="padding:6px 0;margin-bottom:8px;font-size:.73rem;color:var(--muted);display:none">
-Target Prices = DPS &divide; Target Div Yield &nbsp;|&nbsp;
-Columns show what price yields 6% / 5.5% / 5% / 4.5% dividend at current DPS
 </div>
 
 <div class="grid-view active" id="gv"></div>
@@ -165,7 +160,7 @@ var D={
   },
 
   _updateMeta(){
-    document.getElementById('formula').style.display='block';
+    document.getElementById('formulaText').style.display='inline';
     document.getElementById('metaCount').textContent=D._stocks.length+' stocks';
   },
 
