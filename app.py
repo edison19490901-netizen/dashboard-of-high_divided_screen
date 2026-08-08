@@ -4,12 +4,19 @@ Start: python app.py
 Dashboard HTML can be opened standalone (file:// or http://localhost:8080)
 """
 import json, os, sys, time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse
 
 import pandas as pd
+
+# Beijing timezone (UTC+8)
+BJ_TZ = timezone(timedelta(hours=8))
+
+def bj_now():
+    """Return current datetime in Beijing timezone"""
+    return datetime.now(BJ_TZ)
 
 BASE_DIR = Path(__file__).resolve().parent
 CACHE_DIR = BASE_DIR / 'cache'
@@ -75,7 +82,7 @@ def screen_from_cache():
             'bb_upper': None, 'bb_lower': None,
             'pct_from_upper': None, 'pct_from_lower': None,
             'data_date': trade_date,
-            'price_date': datetime.now().strftime('%Y%m%d'),
+            'price_date': bj_now().strftime('%Y%m%d'),
         })
     return pd.DataFrame(results)
 
@@ -102,7 +109,7 @@ def supplement_baostock(df):
         print('  Baostock login failed, skipping real-time price update (using Tushare cache)')
         return df
 
-    today = datetime.now().strftime('%Y%m%d %H:%M')
+    today = bj_now().strftime('%Y%m%d %H:%M')
     fail_count = 0
     max_fail = 20  # consecutive failures threshold
 
@@ -119,7 +126,7 @@ def supplement_baostock(df):
         success = False
         for retry in range(2):
             try:
-                end = datetime.now()
+                end = bj_now()
                 start = end - timedelta(days=400)
                 rs = bs.query_history_k_data_plus(
                     bs_code, 'date,close',
@@ -220,7 +227,7 @@ def save_price_cache(df):
     """Save price data to cache"""
     data = {
         'stocks': json.loads(df.to_json(orient='records', force_ascii=False)),
-        'price_date': datetime.now().strftime('%Y%m%d'),
+        'price_date': bj_now().strftime('%Y%m%d'),
     }
     with open(PRICE_CACHE_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False)
@@ -253,24 +260,32 @@ def run_full_pipeline(force_refresh=False):
 def update_tushare_cache():
     token = load_token()
     if not token:
-        return False, 'TUSHARE_TOKEN not configured (add it to .env file in app.py directory)'
+        return False, 'TUSHARE_TOKEN not configured (add it to .env file or Render env vars)'
     import tushare as ts
-    pro = ts.pro_api(token=token)
+    try:
+        pro = ts.pro_api(token=token)
+    except Exception as e:
+        return False, f'Tushare init failed: {e} (check token validity)'
     trade_date = None
-    for offset in range(5):
-        d = (datetime.now() - timedelta(days=offset)).strftime('%Y%m%d')
+    last_error = ''
+    # Search back up to 10 days for a trading date
+    for offset in range(10):
+        d = (bj_now() - timedelta(days=offset)).strftime('%Y%m%d')
         try:
-            if not pro.daily(trade_date=d, fields='trade_date').empty:
+            result = pro.daily(trade_date=d, fields='trade_date')
+            if result is not None and not result.empty:
                 trade_date = d
                 break
-        except Exception:
+        except Exception as e:
+            last_error = str(e)
             continue
     if not trade_date:
-        return False, 'Could not find recent trading date'
+        hint = f' (last error: {last_error})' if last_error else ''
+        return False, f'Could not find recent trading date — token may need IP whitelist on Render{hint}'
     try:
         df = pro.daily_basic(trade_date=trade_date)
         if df is None or df.empty:
-            return False, 'daily_basic returned empty'
+            return False, f'daily_basic returned empty for {trade_date}'
     except Exception as e:
         return False, f'API call failed: {e}'
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -312,7 +327,7 @@ def send_pushplus(token: str, title: str, content: str, template: str = 'html') 
 
 def build_push_html(df) -> str:
     count = len(df)
-    now = datetime.now().strftime('%Y-%m-%d %H:%M')
+    now = bj_now().strftime('%Y-%m-%d %H:%M')
     df_sorted = df.sort_values('pct_from_low', ascending=True).head(20)
 
     def pct_color(v):
@@ -408,7 +423,7 @@ class Handler(SimpleHTTPRequestHandler):
             self._json({'ok': False, 'error': 'No cached data or no stocks matching criteria'}, 500)
             return
         data = json.loads(df.to_json(orient='records', force_ascii=False))
-        today = datetime.now().strftime('%Y%m%d %H:%M')
+        today = bj_now().strftime('%Y%m%d %H:%M')
 
         # PushPlus push (if token configured, works locally and on cloud)
         token = os.getenv('PUSHPLUS_TOKEN', '')
@@ -416,9 +431,9 @@ class Handler(SimpleHTTPRequestHandler):
             try:
                 html_content = build_push_html(df)
                 ok = send_pushplus(token, f'High Dividend Daily Report ({len(data)} stocks)', html_content, 'html')
-                print(f'[{datetime.now():%H:%M}] PushPlus: {"OK" if ok else "FAIL"}')
+                print(f'[{bj_now():%H:%M}] PushPlus: {"OK" if ok else "FAIL"}')
             except Exception as e:
-                print(f'[{datetime.now():%H:%M}] PushPlus error: {e}')
+                print(f'[{bj_now():%H:%M}] PushPlus error: {e}')
 
         self._json({'ok': True, 'stocks': data, 'count': len(data), 'price_date': today})
 
@@ -465,11 +480,24 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def log_message(self, format, *args):
-        print(f'[{datetime.now().strftime("%H:%M:%S")}] {args[0]}')
+        print(f'[{bj_now().strftime("%H:%M:%S")}] {args[0]}')
 
 
 def main():
     port = int(os.getenv('PORT', '8080'))
+
+    # Startup: check cache status
+    pqts = sorted(CACHE_DIR.glob('daily_basic_*.parquet'), reverse=True)
+    if pqts:
+        latest_date = pqts[0].stem.replace('daily_basic_', '')
+        print(f'Cache found: {latest_date} ({len(pqts)} files)')
+    else:
+        print('No cache found — attempting initial Tushare fetch...')
+        ok, msg = update_tushare_cache()
+        print(f'  Init cache: {msg}')
+        if not ok and os.getenv('RENDER'):
+            print('  WARNING: On Render, set TUSHARE_TOKEN env var and ensure IP is whitelisted at tushare.pro')
+
     server = HTTPServer(('0.0.0.0', port), Handler)
     print(f'API Server: http://localhost:{port}')
     print(f'Data endpoint: http://localhost:{port}/api/data')

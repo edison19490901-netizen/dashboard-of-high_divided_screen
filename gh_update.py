@@ -5,8 +5,15 @@ GitHub Actions daily update script
 - Push via PushPlus to WeChat
 """
 import sys, os, json, re, shutil, html as html_module
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+# Beijing timezone (UTC+8)
+BJ_TZ = timezone(timedelta(hours=8))
+
+def bj_now():
+    """Return current datetime in Beijing timezone"""
+    return datetime.now(BJ_TZ)
 
 # Ensure we're in the project root
 os.chdir(Path(__file__).resolve().parent)
@@ -57,7 +64,7 @@ def send_pushplus(token: str, title: str, content: str, template: str = 'html') 
 def build_static_html(df) -> str:
     """Build compact TOP20 static HTML table (WeChat renderable)"""
     count = len(df)
-    now = datetime.now().strftime('%Y-%m-%d %H:%M')
+    now = bj_now().strftime('%Y-%m-%d %H:%M')
 
     df_sorted = df.sort_values('pct_from_low', ascending=True)
     df_show = df_sorted.head(20)
@@ -122,7 +129,7 @@ def build_static_html(df) -> str:
 
 
 def main():
-    print(f'[{datetime.now():%Y-%m-%d %H:%M}] Starting pipeline...')
+    print(f'[{bj_now():%Y-%m-%d %H:%M}] Starting pipeline...')
 
     # Step 1: Ensure cache exists
     cache_dir = Path('cache')
@@ -176,7 +183,7 @@ def main():
         print(f'  dashboard.html updated ({len(stocks)} stocks)')
 
     # Step 4: Monday Tushare refresh
-    if datetime.now().weekday() == 0:
+    if bj_now().weekday() == 0:
         ok, msg = update_tushare_cache()
         print(f'  Dividend yield refresh: {msg}')
 
@@ -199,7 +206,7 @@ def main():
         except Exception:
             pass
 
-    print(f'[{datetime.now():%Y-%m-%d %H:%M}] Done: {len(stocks)} stocks')
+    print(f'[{bj_now():%Y-%m-%d %H:%M}] Done: {len(stocks)} stocks')
 
 
 if __name__ == '__main__':
