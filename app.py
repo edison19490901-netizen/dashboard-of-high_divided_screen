@@ -370,6 +370,31 @@ def build_push_html(df) -> str:
         f'<a href="{get_dashboard_url()}" style="color:#6366f1;font-size:12px">View Interactive Dashboard</a></div></body></html>')
 
 
+def _update_html_embed(stocks):
+    """Update EMBED data in dashboard.html and index.html (disk persist)"""
+    import re
+    embed_json = json.dumps(stocks, ensure_ascii=False)
+    for fname in ['dashboard.html', 'index.html']:
+        fpath = BASE_DIR / fname
+        if not fpath.exists():
+            continue
+        html = fpath.read_text(encoding='utf-8')
+        if 'var EMBED=' in html:
+            html = re.sub(
+                r'var EMBED=\[.*?\];',
+                f'var EMBED={embed_json};',
+                html
+            )
+        elif 'var EMBED =' in html:
+            html = re.sub(
+                r'var EMBED = \[.*?\];',
+                f'var EMBED = {embed_json};',
+                html
+            )
+        fpath.write_text(html, encoding='utf-8')
+        print(f'[{bj_now():%H:%M}] EMBED updated in {fname} ({len(stocks)} stocks)')
+
+
 # ════════════════════ Web Server ════════════════════
 
 HTML_FILE = BASE_DIR / 'dashboard.html'
@@ -425,6 +450,12 @@ class Handler(SimpleHTTPRequestHandler):
         data = json.loads(df.to_json(orient='records', force_ascii=False))
         today = bj_now().strftime('%Y%m%d %H:%M')
 
+        # Persist EMBED to HTML files on disk
+        try:
+            _update_html_embed(data)
+        except Exception as e:
+            print(f'[{bj_now():%H:%M}] EMBED update failed: {e}')
+
         # PushPlus push (if token configured, works locally and on cloud)
         token = os.getenv('PUSHPLUS_TOKEN', '')
         if token and not df.empty:
@@ -468,7 +499,28 @@ class Handler(SimpleHTTPRequestHandler):
     def _api_update(self):
         ok, msg = update_tushare_cache()
         if ok:
+            # Refresh EMBED in HTML files with latest cache data
+            try:
+                df = screen_from_cache()
+                if df is not None and not df.empty:
+                    data = json.loads(df.to_json(orient='records', force_ascii=False))
+                    _update_html_embed(data)
+            except Exception as e:
+                print(f'  EMBED update failed: {e}')
             self._json({'ok': True, 'message': msg})
+            return
+        # Tushare fetch failed — fall back to existing cache if available
+        pqts = sorted(CACHE_DIR.glob('daily_basic_*.parquet'), reverse=True)
+        if pqts:
+            cache_date = pqts[0].stem.replace('daily_basic_', '')
+            try:
+                df = screen_from_cache()
+                if df is not None and not df.empty:
+                    data = json.loads(df.to_json(orient='records', force_ascii=False))
+                    _update_html_embed(data)
+            except Exception:
+                pass
+            self._json({'ok': True, 'message': f'Using cached data ({cache_date}) — Tushare: {msg}'})
         else:
             self._json({'ok': False, 'error': msg}, 500)
 
