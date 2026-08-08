@@ -152,27 +152,28 @@ def main():
         save_price_cache(df)  # persist cache for Render deployment
 
     if df.empty:
-        print('No stocks match criteria')
-        stocks = []
+        print('No stocks match criteria — skipping EMBED update (keeping previous data)')
+        stocks = None  # Signal: don't update EMBED
     else:
         stocks = json.loads(df.to_json(orient='records', force_ascii=False))
 
-    # Step 3: Update dashboard.html
-    dashboard_path = Path('dashboard.html')
-    with open(dashboard_path, 'r', encoding='utf-8') as f:
-        html = f.read()
+    # Step 3: Update dashboard.html (only if we have data)
+    if stocks:
+        dashboard_path = Path('dashboard.html')
+        with open(dashboard_path, 'r', encoding='utf-8') as f:
+            html = f.read()
 
-    if 'var EMBED=' in html:
-        html = re.sub(
-            r'var EMBED=\[.*?\];',
-            f'var EMBED={json.dumps(stocks, ensure_ascii=False)};',
-            html
-        )
+        if 'var EMBED=' in html:
+            html = re.sub(
+                r'var EMBED=\[.*?\];',
+                f'var EMBED={json.dumps(stocks, ensure_ascii=False)};',
+                html
+            )
 
-    with open(dashboard_path, 'w', encoding='utf-8') as f:
-        f.write(html)
-    shutil.copy(dashboard_path, 'index.html')
-    print(f'  dashboard.html updated')
+        with open(dashboard_path, 'w', encoding='utf-8') as f:
+            f.write(html)
+        shutil.copy(dashboard_path, 'index.html')
+        print(f'  dashboard.html updated ({len(stocks)} stocks)')
 
     # Step 4: Monday Tushare refresh
     if datetime.now().weekday() == 0:
