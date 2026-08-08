@@ -176,6 +176,21 @@ def supplement_baostock(df):
         # Rate limit: 150ms between stocks
         time.sleep(0.15)
 
+        # Save daily price history + daily BB for mini chart (last 60 days)
+        try:
+            closes = [round(float(c), 2) for c in dp['close'].values[-60:].tolist()]
+            df.at[i, 'price_history'] = json.dumps(closes)
+            if len(closes) >= 20:
+                import numpy as np
+                s = pd.Series(closes)
+                ma20_d = s.rolling(20).mean()
+                std20_d = s.rolling(20).std()
+                df.at[i, 'bb_daily_upper'] = json.dumps([round(float(v), 2) if pd.notna(v) else None for v in (ma20_d + 2 * std20_d).tolist()])
+                df.at[i, 'bb_daily_mid'] = json.dumps([round(float(v), 2) if pd.notna(v) else None for v in ma20_d.tolist()])
+                df.at[i, 'bb_daily_lower'] = json.dumps([round(float(v), 2) if pd.notna(v) else None for v in (ma20_d - 2 * std20_d).tolist()])
+        except Exception:
+            pass
+
     bs.logout()
     return df
 
