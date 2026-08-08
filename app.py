@@ -328,30 +328,29 @@ def send_pushplus(token: str, title: str, content: str, template: str = 'html') 
 def build_push_html(df) -> str:
     count = len(df)
     now = bj_now().strftime('%Y-%m-%d %H:%M')
-    df_sorted = df.sort_values('pct_from_low', ascending=True).head(20)
-
-    def pct_color(v):
-        try: v = float(v); return '#059669' if v <= 8 else '#d97706' if v <= 12 else '#dc2626'
-        except: return '#64748b'
-
-    def div_color(v):
-        try: v = float(v); return '#059669' if v >= 5 else '#d97706' if v >= 4 else '#dc2626'
-        except: return '#64748b'
+    df_all = df.sort_values('dividend_yield', ascending=False)
 
     rows = ''
-    for _, r in df_sorted.iterrows():
+    for _, r in df_all.iterrows():
         name = html_mod.escape(str(r.get('name', '-')))
         code = html_mod.escape(str(r.get('code', '-')))
+        price = r.get('latest_price', 0)
+        dps = r.get('dividend_per_share')
+        # Calculate target prices
+        t6 = round(dps / 0.06, 2) if dps and dps > 0 else '-'
+        t55 = round(dps / 0.055, 2) if dps and dps > 0 else '-'
+        t5 = round(dps / 0.05, 2) if dps and dps > 0 else '-'
+        t45 = round(dps / 0.045, 2) if dps and dps > 0 else '-'
+
         rows += (
             f'<tr><td style="text-align:left;font-weight:500;white-space:nowrap">'
             f'{name}<br><span style="font-size:10px;color:#8892b0">{code}</span></td>'
-            f'<td style="font-weight:600">{r.get("latest_price",0):.2f}</td>'
-            f'<td style="color:{div_color(r.get("dividend_yield",0))};font-weight:600">{r.get("dividend_yield",0):.1f}%</td>'
-            f'<td style="color:{pct_color(r.get("pct_from_low","-"))};font-weight:600">{r.get("pct_from_low","-")}%</td>'
-            f'<td style="color:{pct_color(r.get("pct_from_lower","-"))};font-weight:600">{r.get("pct_from_lower","-")}%</td>'
-            f'<td style="white-space:nowrap">{r.get("market_cap_billion",0):.0f}B</td></tr>')
+            f'<td style="font-weight:600">{price:.2f}</td>'
+            f'<td style="font-weight:600">{t6}</td>'
+            f'<td style="font-weight:600">{t55}</td>'
+            f'<td style="font-weight:600">{t5}</td>'
+            f'<td style="font-weight:600">{t45}</td></tr>')
 
-    more = f'<div style="text-align:center;padding:8px;color:#d97706;font-size:12px">Showing TOP 20 of {count} total</div>' if count > 20 else ''
     return (
         f'<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
         f'<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>High Dividend Daily Report</title></head>'
@@ -359,11 +358,11 @@ def build_push_html(df) -> str:
         f'<div style="text-align:center;padding:10px 0 14px;border-bottom:1px solid #e2e8f0;margin-bottom:10px">'
         f'<div style="font-size:17px;font-weight:700;color:#1a1a2e">High Dividend Daily Report</div>'
         f'<div style="color:#64748b;font-size:11px;margin-top:5px">{now} | Matching: <b style="color:#059669">{count}</b> stocks</div></div>'
-        f'{more}<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff">'
+        f'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff">'
         f'<thead><tr style="background:#f1f5f9;color:#64748b;font-size:10px;letter-spacing:.5px">'
         f'<th style="padding:8px 4px;text-align:left">Name</th><th style="padding:8px 4px">Price</th>'
-        f'<th style="padding:8px 4px">Div Yield</th><th style="padding:8px 4px">From Low</th>'
-        f'<th style="padding:8px 4px">From BB</th><th style="padding:8px 4px">Mkt Cap</th></tr></thead>'
+        f'<th style="padding:8px 4px">P@6%Div</th><th style="padding:8px 4px">P@5.5%Div</th>'
+        f'<th style="padding:8px 4px">P@5%Div</th><th style="padding:8px 4px">P@4.5%Div</th></tr></thead>'
         f'<tbody>{rows}</tbody></table></div>'
         f'<div style="text-align:center;padding:10px;color:#94a3b8;font-size:10px;border-top:1px solid #e2e8f0;margin-top:10px">'
         f'Data sources: Tushare + Baostock | For reference only<br>'
