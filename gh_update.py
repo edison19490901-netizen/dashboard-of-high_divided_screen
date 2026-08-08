@@ -132,12 +132,13 @@ def main():
         sys.exit(0)
 
     print(f'  Screened: {len(df)} stocks, fetching prices...')
-    df = supplement_baostock(df)
-    df = apply_price_filter(df)
+    df_full = supplement_baostock(df.copy())  # All screened stocks with prices
+    df = apply_price_filter(df_full)  # Filtered for EMBED
     print(f'  After filter: {len(df)} stocks')
     if not df.empty:
         save_price_cache(df)  # persist cache for Render deployment
 
+    # EMBED update: use filtered stocks only
     if df.empty:
         print('No stocks match criteria — skipping EMBED update (keeping previous data)')
         stocks = None  # Signal: don't update EMBED
@@ -167,11 +168,11 @@ def main():
         ok, msg = update_tushare_cache()
         print(f'  Dividend yield refresh: {msg}')
 
-    # Step 5: PushPlus push (if token set, works locally and on cloud)
+    # Step 5: PushPlus push — ALL screened stocks (before price filter), if token set
     pushplus_token = os.getenv('PUSHPLUS_TOKEN', '')
-    if pushplus_token and stocks:
-        html_content = build_static_html(df)
-        send_pushplus(pushplus_token, f'High Dividend Daily Report ({len(stocks)} stocks)', html_content, 'html')
+    if pushplus_token and not df_full.empty:
+        html_content = build_static_html(df_full)
+        send_pushplus(pushplus_token, f'High Dividend Daily Report ({len(df_full)} stocks)', html_content, 'html')
     elif pushplus_token:
         send_pushplus(pushplus_token, 'High Dividend Screener - No Results',
                       'No stocks match today (Div Yield>3% + Mkt Cap>50B + Low Price)', 'txt')
@@ -186,7 +187,7 @@ def main():
         except Exception:
             pass
 
-    print(f'[{bj_now():%Y-%m-%d %H:%M}] Done: {len(stocks)} stocks')
+    print(f'[{bj_now():%Y-%m-%d %H:%M}] Done: {len(df_full)} stocks screened, {len(stocks) if stocks else 0} filtered')
 
 
 if __name__ == '__main__':

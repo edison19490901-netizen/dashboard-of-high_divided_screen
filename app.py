@@ -442,28 +442,38 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(404)
 
     def _api_refresh_prices(self):
-        df, _ = run_full_pipeline(force_refresh=True)
+        # Step 1: Screen from cache (dividend + market cap)
+        df = screen_from_cache()
         if df is None or df.empty:
             self._json({'ok': False, 'error': 'No cached data or no stocks matching criteria'}, 500)
             return
-        data = json.loads(df.to_json(orient='records', force_ascii=False))
+
+        # Step 2: Supplement with Baostock real-time prices (unfiltered)
+        df_full = supplement_baostock(df.copy())
+        data_full = json.loads(df_full.to_json(orient='records', force_ascii=False))
         today = bj_now().strftime('%Y%m%d %H:%M')
 
-        # Persist EMBED to HTML files on disk
+        # Step 3: PushPlus — push ALL screened stocks (before price filter)
+        token = os.getenv('PUSHPLUS_TOKEN', '')
+        if token and not df_full.empty:
+            try:
+                html_content = build_push_html(df_full)
+                ok = send_pushplus(token, f'High Dividend Daily Report ({len(data_full)} stocks)', html_content, 'html')
+                print(f'[{bj_now():%H:%M}] PushPlus: {"OK" if ok else "FAIL"}')
+            except Exception as e:
+                print(f'[{bj_now():%H:%M}] PushPlus error: {e}')
+
+        # Step 4: Apply price filter for dashboard + EMBED
+        df_filtered = apply_price_filter(df_full)
+        if not df_filtered.empty:
+            save_price_cache(df_filtered)
+        data = json.loads(df_filtered.to_json(orient='records', force_ascii=False))
+
+        # Persist EMBED to HTML files on disk (filtered for dashboard display)
         try:
             _update_html_embed(data)
         except Exception as e:
             print(f'[{bj_now():%H:%M}] EMBED update failed: {e}')
-
-        # PushPlus push (if token configured, works locally and on cloud)
-        token = os.getenv('PUSHPLUS_TOKEN', '')
-        if token and not df.empty:
-            try:
-                html_content = build_push_html(df)
-                ok = send_pushplus(token, f'High Dividend Daily Report ({len(data)} stocks)', html_content, 'html')
-                print(f'[{bj_now():%H:%M}] PushPlus: {"OK" if ok else "FAIL"}')
-            except Exception as e:
-                print(f'[{bj_now():%H:%M}] PushPlus error: {e}')
 
         self._json({'ok': True, 'stocks': data, 'count': len(data), 'price_date': today})
 
