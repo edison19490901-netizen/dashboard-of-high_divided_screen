@@ -326,47 +326,39 @@ def send_pushplus(token: str, title: str, content: str, template: str = 'html') 
 
 
 def build_push_html(df) -> str:
+    """Build compact HTML table for PushPlus (under 20k chars)"""
     count = len(df)
     now = bj_now().strftime('%Y-%m-%d %H:%M')
-    df_all = df.sort_values('dividend_yield', ascending=False)
+    df_sorted = df.sort_values('dividend_yield', ascending=False)
 
     rows = ''
-    for _, r in df_all.iterrows():
+    for _, r in df_sorted.iterrows():
         name = html_mod.escape(str(r.get('name', '-')))
         code = html_mod.escape(str(r.get('code', '-')))
         price = r.get('latest_price', 0)
         dps = r.get('dividend_per_share')
-        # Calculate target prices
-        t6 = round(dps / 0.06, 2) if dps and dps > 0 else '-'
-        t55 = round(dps / 0.055, 2) if dps and dps > 0 else '-'
-        t5 = round(dps / 0.05, 2) if dps and dps > 0 else '-'
-        t45 = round(dps / 0.045, 2) if dps and dps > 0 else '-'
+        t6 = f'{dps/0.06:.2f}' if dps and dps > 0 else '-'
+        t55 = f'{dps/0.055:.2f}' if dps and dps > 0 else '-'
+        t5 = f'{dps/0.05:.2f}' if dps and dps > 0 else '-'
+        t45 = f'{dps/0.045:.2f}' if dps and dps > 0 else '-'
+        rows += f'<tr><td class="nl">{name}<span>{code}</span></td><td>{price:.2f}</td><td>{t6}</td><td>{t55}</td><td>{t5}</td><td>{t45}</td></tr>'
 
-        rows += (
-            f'<tr><td style="text-align:left;font-weight:500;white-space:nowrap">'
-            f'{name}<br><span style="font-size:10px;color:#8892b0">{code}</span></td>'
-            f'<td style="font-weight:600">{price:.2f}</td>'
-            f'<td style="font-weight:600">{t6}</td>'
-            f'<td style="font-weight:600">{t55}</td>'
-            f'<td style="font-weight:600">{t5}</td>'
-            f'<td style="font-weight:600">{t45}</td></tr>')
+    css = 'body{margin:0;padding:10px;font-family:-apple-system,PingFang SC,Microsoft YaHei,sans-serif;background:#fff;color:#1a1a2e;font-size:12px}' \
+          'h2{font-size:16px;text-align:center;margin:0 0 4px;color:#1a1a2e}' \
+          '.info{text-align:center;font-size:10px;color:#64748b;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e2e8f0}' \
+          'table{width:100%;border-collapse:collapse}' \
+          'th{background:#f1f5f9;color:#64748b;font-size:10px;padding:6px 3px;text-align:left}' \
+          'td{padding:5px 3px;border-bottom:1px solid #f1f5f9}' \
+          '.nl{font-weight:500}.nl span{display:block;font-size:9px;color:#8892b0}' \
+          '.ft{text-align:center;font-size:9px;color:#94a3b8;padding-top:8px;border-top:1px solid #e2e8f0;margin-top:8px}'
 
-    return (
-        f'<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
-        f'<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>High Dividend Daily Report</title></head>'
-        f'<body style="margin:0;padding:10px;font-family:-apple-system,PingFang SC,Microsoft YaHei,sans-serif;background:#fff;color:#1a1a2e">'
-        f'<div style="text-align:center;padding:10px 0 14px;border-bottom:1px solid #e2e8f0;margin-bottom:10px">'
-        f'<div style="font-size:17px;font-weight:700;color:#1a1a2e">High Dividend Daily Report</div>'
-        f'<div style="color:#64748b;font-size:11px;margin-top:5px">{now} | Matching: <b style="color:#059669">{count}</b> stocks</div></div>'
-        f'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff">'
-        f'<thead><tr style="background:#f1f5f9;color:#64748b;font-size:10px;letter-spacing:.5px">'
-        f'<th style="padding:8px 4px;text-align:left">Name</th><th style="padding:8px 4px">Price</th>'
-        f'<th style="padding:8px 4px">P@6%Div</th><th style="padding:8px 4px">P@5.5%Div</th>'
-        f'<th style="padding:8px 4px">P@5%Div</th><th style="padding:8px 4px">P@4.5%Div</th></tr></thead>'
-        f'<tbody>{rows}</tbody></table></div>'
-        f'<div style="text-align:center;padding:10px;color:#94a3b8;font-size:10px;border-top:1px solid #e2e8f0;margin-top:10px">'
-        f'Data sources: Tushare + Baostock | For reference only<br>'
-        f'<a href="{get_dashboard_url()}" style="color:#6366f1;font-size:12px">View Interactive Dashboard</a></div></body></html>')
+    return f'<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">' \
+           f'<title>High Dividend Daily Report</title><style>{css}</style></head><body>' \
+           f'<h2>High Dividend Daily Report</h2>' \
+           f'<div class="info">{now} | <b style="color:#059669">{count}</b> stocks | Div&gt;3% · MktCap&gt;50B · Low&lt;15% · BB&lt;15%</div>' \
+           f'<table><thead><tr><th>Name</th><th>Price</th><th>P@6%</th><th>P@5.5%</th><th>P@5%</th><th>P@4.5%</th></tr></thead>' \
+           f'<tbody>{rows}</tbody></table>' \
+           f'<div class="ft">Tushare + Baostock | <a href="{get_dashboard_url()}" style="color:#6366f1">Open Dashboard</a></div></body></html>'
 
 
 def _update_html_embed(stocks):
@@ -448,28 +440,27 @@ class Handler(SimpleHTTPRequestHandler):
             self._json({'ok': False, 'error': 'No cached data or no stocks matching criteria'}, 500)
             return
 
-        # Step 2: Supplement with Baostock real-time prices (unfiltered)
+        # Step 2: Supplement with Baostock real-time prices
         df_full = supplement_baostock(df.copy())
-        data_full = json.loads(df_full.to_json(orient='records', force_ascii=False))
         today = bj_now().strftime('%Y%m%d %H:%M')
 
-        # Step 3: PushPlus — push ALL screened stocks (before price filter)
-        token = os.getenv('PUSHPLUS_TOKEN', '')
-        if token and not df_full.empty:
-            try:
-                html_content = build_push_html(df_full)
-                ok = send_pushplus(token, f'High Dividend Daily Report ({len(data_full)} stocks)', html_content, 'html')
-                print(f'[{bj_now():%H:%M}] PushPlus: {"OK" if ok else "FAIL"}')
-            except Exception as e:
-                print(f'[{bj_now():%H:%M}] PushPlus error: {e}')
-
-        # Step 4: Apply price filter for dashboard + EMBED
+        # Step 3: Apply price filter for dashboard + EMBED + PushPlus
         df_filtered = apply_price_filter(df_full)
         if not df_filtered.empty:
             save_price_cache(df_filtered)
         data = json.loads(df_filtered.to_json(orient='records', force_ascii=False))
 
-        # Persist EMBED to HTML files on disk (filtered for dashboard display)
+        # Step 4: PushPlus — push filtered stocks
+        token = os.getenv('PUSHPLUS_TOKEN', '')
+        if token and not df_filtered.empty:
+            try:
+                html_content = build_push_html(df_filtered)
+                ok = send_pushplus(token, f'High Dividend Daily Report ({len(data)} stocks)', html_content, 'html')
+                print(f'[{bj_now():%H:%M}] PushPlus: {"OK" if ok else "FAIL"} (size={len(html_content)} chars)')
+            except Exception as e:
+                print(f'[{bj_now():%H:%M}] PushPlus error: {e}')
+
+        # Step 5: Persist EMBED to HTML files on disk
         try:
             _update_html_embed(data)
         except Exception as e:
