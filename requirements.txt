@@ -1,7 +1,5 @@
 tushare>=1.4.0
 baostock>=0.8.8
-akshare>=1.18.0
 pandas>=2.0.0
 pyarrow
-numpy
 python-dotenv>=1.0.0
