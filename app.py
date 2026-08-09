@@ -444,8 +444,13 @@ class Handler(SimpleHTTPRequestHandler):
         df_full = supplement_baostock(df.copy())
         today = bj_now().strftime('%Y%m%d %H:%M')
 
-        # Step 3: Apply price filter for dashboard + EMBED + PushPlus
-        df_filtered = apply_price_filter(df_full)
+        # Step 3: Apply price filter (skip if Baostock failed)
+        baostock_ok = df_full['pct_from_low'].notna().any()
+        if not baostock_ok:
+            print(f'[{bj_now():%H:%M}] Baostock failed — using cached prices, skipping filter')
+            df_filtered = df_full
+        else:
+            df_filtered = apply_price_filter(df_full)
         if not df_filtered.empty:
             save_price_cache(df_filtered)
         data = json.loads(df_filtered.to_json(orient='records', force_ascii=False))

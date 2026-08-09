@@ -121,8 +121,14 @@ def main():
         sys.exit(0)
 
     print(f'  Screened: {len(df)} stocks, fetching prices...')
-    df_full = supplement_baostock(df.copy())  # All screened stocks with prices
-    df = apply_price_filter(df_full)  # Filtered for EMBED
+    df_full = supplement_baostock(df.copy())
+    # Detect if Baostock actually returned price data
+    baostock_ok = df_full['pct_from_low'].notna().any()
+    if not baostock_ok:
+        print('  Baostock failed — using cached prices, skipping price filter')
+        df = df_full  # Use all screened stocks as-is (no filter)
+    else:
+        df = apply_price_filter(df_full)
     print(f'  After filter: {len(df)} stocks')
     if not df.empty:
         save_price_cache(df)  # persist cache for Render deployment
