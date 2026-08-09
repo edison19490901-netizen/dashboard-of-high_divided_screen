@@ -30,6 +30,24 @@ def supplement_akshare(df):
     import akshare as ak
     import numpy as np
 
+    # Save & clear proxy env vars — akshare/requests reads system proxy.
+    # If proxy is unreachable, all calls fail. Restore after function returns.
+    proxy_keys = ('HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy', 'ALL_PROXY', 'all_proxy')
+    saved_proxy = {k: os.environ.pop(k, None) for k in proxy_keys}
+    os.environ['NO_PROXY'] = '*'
+
+    try:
+        return _supplement_akshare_impl(df, ak, np)
+    finally:
+        # Restore proxy settings
+        for k, v in saved_proxy.items():
+            if v is not None:
+                os.environ[k] = v
+        if all(v is None for v in saved_proxy.values()):
+            os.environ.pop('NO_PROXY', None)
+
+
+def _supplement_akshare_impl(df, ak, np):
     if df.empty:
         return df
 
