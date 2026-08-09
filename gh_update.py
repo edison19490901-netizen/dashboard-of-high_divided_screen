@@ -4,9 +4,11 @@ GitHub Actions daily update script
 - Update dashboard.html
 - Push via PushPlus to WeChat
 """
-import sys, os, json, re, shutil, html as html_module
+import sys, os, json, re, shutil, time, html as html_module
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+import pandas as pd
 
 # Beijing timezone (UTC+8)
 BJ_TZ = timezone(timedelta(hours=8))
@@ -19,7 +21,101 @@ def bj_now():
 os.chdir(Path(__file__).resolve().parent)
 sys.path.insert(0, '.')
 
-from app import screen_from_cache, supplement_baostock, apply_price_filter, update_tushare_cache, save_price_cache
+from app import screen_from_cache, apply_price_filter, update_tushare_cache, save_price_cache
+
+# ════════════════════ akshare Supplement ════════════════════
+
+def supplement_akshare(df):
+    """Supplement stock data with akshare (replaces Baostock when server is down)"""
+    import akshare as ak
+    import numpy as np
+
+    if df.empty:
+        return df
+
+    today = bj_now().strftime('%Y%m%d %H:%M')
+    fail_count = 0
+    max_fail = 15
+
+    for i, (_, row) in enumerate(df.iterrows()):
+        if fail_count >= max_fail:
+            print(f'  akshare: {max_fail} consecutive failures, skipping remaining {len(df) - i} stocks')
+            break
+
+        df.at[i, 'price_date'] = today
+        code_raw = row['code']
+        # Convert "600519.SH" → "600519"
+        parts = code_raw.split('.')
+        symbol = parts[0] if len(parts) == 2 else code_raw
+
+        try:
+            end = bj_now()
+            start = end - timedelta(days=400)
+            dp = ak.stock_zh_a_hist(
+                symbol=symbol,
+                period='daily',
+                start_date=start.strftime('%Y%m%d'),
+                end_date=end.strftime('%Y%m%d'),
+                adjust='qfq',
+            )
+            if dp is None or dp.empty:
+                fail_count += 1
+                continue
+
+            closes = pd.Series(pd.to_numeric(dp['收盘'], errors='coerce')).dropna()
+            if len(closes) < 20:
+                fail_count += 1
+                continue
+
+            df.at[i, 'latest_price'] = round(float(closes.iloc[-1]), 2)
+            df.at[i, 'min_price_1y'] = round(float(closes.min()), 2)
+            df.at[i, 'pct_from_low'] = round((df.at[i, 'latest_price'] - float(closes.min())) / float(closes.min()) * 100, 1)
+
+            # Weekly Bollinger Bands
+            try:
+                dp['trade_date'] = pd.to_datetime(dp['日期'])
+                dp_w = dp.set_index('trade_date')['收盘'].resample('W-FRI').last().dropna()
+                weekly = pd.Series(pd.to_numeric(dp_w, errors='coerce')).dropna()
+                if len(weekly) >= 20:
+                    ma20 = weekly.rolling(20).mean()
+                    std20 = weekly.rolling(20).std()
+                    bb_up = float(ma20.iloc[-1] + 2 * std20.iloc[-1])
+                    bb_lo = float(ma20.iloc[-1] - 2 * std20.iloc[-1])
+                    df.at[i, 'bb_upper'] = round(bb_up, 2)
+                    df.at[i, 'bb_lower'] = round(bb_lo, 2)
+                    df.at[i, 'pct_from_upper'] = round((df.at[i, 'latest_price'] - bb_up) / bb_up * 100, 1)
+                    df.at[i, 'pct_from_lower'] = round((df.at[i, 'latest_price'] - bb_lo) / bb_lo * 100, 1)
+            except Exception:
+                pass
+
+            # Daily price history + daily BB for mini chart (last 60 days)
+            try:
+                close_list = [round(float(c), 2) for c in closes.values[-60:].tolist()]
+                df.at[i, 'price_history'] = json.dumps(close_list)
+                if len(close_list) >= 20:
+                    s = pd.Series(close_list)
+                    ma20_d = s.rolling(20).mean()
+                    std20_d = s.rolling(20).std()
+                    df.at[i, 'bb_daily_upper'] = json.dumps([round(float(v), 2) if pd.notna(v) else None for v in (ma20_d + 2 * std20_d).tolist()])
+                    df.at[i, 'bb_daily_mid'] = json.dumps([round(float(v), 2) if pd.notna(v) else None for v in ma20_d.tolist()])
+                    df.at[i, 'bb_daily_lower'] = json.dumps([round(float(v), 2) if pd.notna(v) else None for v in (ma20_d - 2 * std20_d).tolist()])
+            except Exception:
+                pass
+
+            fail_count = 0
+
+        except Exception as e:
+            fail_count += 1
+            if fail_count <= 3:
+                print(f'  akshare error [{symbol}]: {e}')
+
+        # Rate limit: 200ms between stocks
+        time.sleep(0.2)
+
+        if (i + 1) % 10 == 0:
+            print(f'  akshare progress: {i + 1}/{len(df)}')
+
+    return df
 
 
 def get_dashboard_url():
@@ -121,12 +217,11 @@ def main():
         sys.exit(0)
 
     print(f'  Screened: {len(df)} stocks, fetching prices...')
-    df_full = supplement_baostock(df.copy())
-    # Detect if Baostock actually returned price data
-    baostock_ok = df_full['pct_from_low'].notna().any()
-    if not baostock_ok:
-        print('  Baostock failed — using cached prices, skipping price filter')
-        df = df_full  # Use all screened stocks as-is (no filter)
+    df_full = supplement_akshare(df.copy())
+    akshare_ok = df_full['pct_from_low'].notna().any()
+    if not akshare_ok:
+        print('  akshare failed — using cached prices, skipping price filter')
+        df = df_full
     else:
         df = apply_price_filter(df_full)
     print(f'  After filter: {len(df)} stocks')
