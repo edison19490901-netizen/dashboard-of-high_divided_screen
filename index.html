@@ -131,14 +131,12 @@ var D={
       let j=await r.json();
       if(j.stocks && j.stocks.length>0){
         var hasFilter=j.stocks[0].pct_from_low!=null;
-        if(hasFilter || D._stocks.length===0){
-          D._stocks=j.stocks;
-          D._loaded=true;
-          document.getElementById('metaSource').textContent=hasFilter?'API (live)':'API (base)';
-          D._updateMeta();
-          if(D._stocks.length>0) D._updateDates();
-          R();
-        }
+        D._stocks=j.stocks;
+        D._loaded=true;
+        document.getElementById('metaSource').textContent=hasFilter?'API (live)':'API (base)';
+        D._updateMeta();
+        if(D._stocks.length>0) D._updateDates();
+        R();
       }
     }catch(e){}
   },
