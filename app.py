@@ -3,7 +3,7 @@ Dashboard Stock Screener — Backend API
 Start: python app.py
 Dashboard HTML can be opened standalone (file:// or http://localhost:8080)
 """
-import json, os, sys, time
+import hashlib, json, os, sys, time
 from datetime import datetime, timedelta, timezone
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -389,6 +389,31 @@ def _update_html_embed(stocks):
 # ════════════════════ Web Server ════════════════════
 
 HTML_FILE = BASE_DIR / 'dashboard.html'
+PASSWORD_FILE = BASE_DIR / 'password.html'
+
+# Auth helpers
+DASHBOARD_PASSWORD = os.getenv('DASHBOARD_PASSWORD', '')
+AUTH_COOKIE_NAME = 'dash_auth'
+
+def _make_token(password):
+    return hashlib.sha256(f'dash-salt-{password}'.encode()).hexdigest()
+
+def _parse_cookies(handler):
+    cookie_header = handler.headers.get('Cookie', '')
+    cookies = {}
+    for item in cookie_header.split(';'):
+        item = item.strip()
+        if '=' in item:
+            k, v = item.split('=', 1)
+            cookies[k.strip()] = v.strip()
+    return cookies
+
+def _check_auth(handler):
+    if not DASHBOARD_PASSWORD:
+        return True  # No password set = open access
+    cookies = _parse_cookies(handler)
+    token = cookies.get(AUTH_COOKIE_NAME, '')
+    return token == _make_token(DASHBOARD_PASSWORD)
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -398,8 +423,16 @@ class Handler(SimpleHTTPRequestHandler):
             self._api_data()
         elif path == '/api/health':
             self._json({'status': 'ok', 'cache': CACHE_DIR.exists()})
-        elif path in ('/', '/dashboard.html'):
-            self._serve_html()
+        elif path in ('/', '/password.html'):
+            if DASHBOARD_PASSWORD and _check_auth(self):
+                self._redirect('/dashboard')
+            else:
+                self._serve_password()
+        elif path in ('/dashboard', '/dashboard.html', '/index.html'):
+            if _check_auth(self):
+                self._serve_dashboard()
+            else:
+                self._redirect('/')
         elif path in ('/manifest.json', '/sw.js', '/stock_screen.png', '/stock.png', '/screen_icon.png'):
             self._send_static(path)
         else:
@@ -426,7 +459,9 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
-        if path == '/api/update':
+        if path == '/login':
+            self._handle_login()
+        elif path == '/api/update':
             self._api_update()
         elif path == '/api/refresh_prices':
             self._api_refresh_prices()
@@ -482,7 +517,18 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _serve_html(self):
+    def _serve_password(self):
+        if PASSWORD_FILE.exists():
+            content = PASSWORD_FILE.read_bytes()
+        else:
+            content = b'<h1>password.html not found</h1>'
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Content-Length', str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def _serve_dashboard(self):
         if HTML_FILE.exists():
             content = HTML_FILE.read_bytes()
         else:
@@ -492,6 +538,36 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header('Content-Length', str(len(content)))
         self.end_headers()
         self.wfile.write(content)
+
+    def _redirect(self, location):
+        self.send_response(302)
+        self.send_header('Location', location)
+        self.end_headers()
+
+    def _handle_login(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        body = self.rfile.read(content_length).decode('utf-8')
+        from urllib.parse import parse_qs
+        params = parse_qs(body)
+        password = params.get('password', [''])[0]
+
+        if not DASHBOARD_PASSWORD:
+            # No password configured — allow access
+            token = _make_token('')
+            self.send_response(302)
+            self.send_header('Set-Cookie', f'{AUTH_COOKIE_NAME}={token}; Path=/; HttpOnly; Max-Age=86400; SameSite=Lax')
+            self.send_header('Location', '/dashboard')
+            self.end_headers()
+        elif password == DASHBOARD_PASSWORD:
+            token = _make_token(password)
+            self.send_response(302)
+            self.send_header('Set-Cookie', f'{AUTH_COOKIE_NAME}={token}; Path=/; HttpOnly; Max-Age=86400; SameSite=Lax')
+            self.send_header('Location', '/dashboard')
+            self.end_headers()
+        else:
+            self.send_response(302)
+            self.send_header('Location', '/?err=1')
+            self.end_headers()
 
     def _api_data(self):
         df, from_cache = run_full_pipeline(force_refresh=False)
