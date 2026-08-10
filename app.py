@@ -469,11 +469,27 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(404)
 
     def _api_refresh_prices(self):
+        try:
+            self.__api_refresh_prices()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self._json({'ok': False, 'error': f'Unexpected error: {e}'}, 500)
+
+    def __api_refresh_prices(self):
         # Step 1: Screen from cache (dividend + market cap)
         df = screen_from_cache()
         if df is None or df.empty:
-            self._json({'ok': False, 'error': 'No cached data or no stocks matching criteria'}, 500)
-            return
+            # Auto-populate cache if missing (e.g. after Render restart)
+            print(f'[{bj_now():%H:%M}] No cache found — fetching from Tushare first...')
+            ok, msg = update_tushare_cache()
+            if not ok:
+                self._json({'ok': False, 'error': f'Cache empty & Tushare failed: {msg}'}, 500)
+                return
+            df = screen_from_cache()
+            if df is None or df.empty:
+                self._json({'ok': False, 'error': 'Tushare fetched but no stocks matched criteria'}, 500)
+                return
 
         # Step 2: Supplement with Baostock real-time prices
         df_full = supplement_baostock(df.copy())
