@@ -242,8 +242,13 @@ def run_full_pipeline(force_refresh=False):
         cached_df, _ = load_price_cache()
         if not cached_df.empty:
             return cached_df, True  # from_cache=True
-        # No cache: return Tushare base data only, skip slow pipeline
+        # No price cache — try Tushare base data
         df = screen_from_cache()
+        if df is None or df.empty:
+            # Auto-populate Tushare cache on cold start (e.g. Render restart)
+            ok, _ = update_tushare_cache()
+            if ok:
+                df = screen_from_cache()
         return (df if df is not None else pd.DataFrame()), False
 
     df = screen_from_cache()
@@ -463,8 +468,12 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_login()
         elif path == '/api/update':
             self._api_update()
+        elif path == '/api/update_all':
+            self._api_update_all()
         elif path == '/api/refresh_prices':
             self._api_refresh_prices()
+        elif path == '/api/pushplus':
+            self._api_pushplus()
         else:
             self.send_error(404)
 
@@ -523,6 +532,76 @@ class Handler(SimpleHTTPRequestHandler):
             print(f'[{bj_now():%H:%M}] EMBED update failed: {e}')
 
         self._json({'ok': True, 'stocks': data, 'count': len(data), 'price_date': today})
+
+    def _api_update_all(self):
+        """Unified update: Tushare → screen → Baostock prices → filter → cache → EMBED"""
+        try:
+            # Step 1: Update Tushare cache
+            print(f'[{bj_now():%H:%M}] Update All: fetching Tushare...')
+            ok, msg = update_tushare_cache()
+            if not ok:
+                self._json({'ok': False, 'error': f'Tushare failed: {msg}'}, 500)
+                return
+
+            # Step 2: Screen from cache
+            df = screen_from_cache()
+            if df is None or df.empty:
+                self._json({'ok': False, 'error': 'No stocks matched criteria after Tushare fetch'}, 500)
+                return
+
+            # Step 3: Supplement with Baostock prices
+            df_full = supplement_baostock(df.copy())
+            today = bj_now().strftime('%Y%m%d %H:%M')
+
+            # Step 4: Apply price filter (skip if Baostock failed)
+            baostock_ok = df_full['pct_from_low'].notna().any()
+            if not baostock_ok:
+                print(f'[{bj_now():%H:%M}] Baostock failed — using base data, skipping filter')
+                df_filtered = df_full
+            else:
+                df_filtered = apply_price_filter(df_full)
+
+            # Step 5: Save price cache
+            if not df_filtered.empty:
+                save_price_cache(df_filtered)
+            data = json.loads(df_filtered.to_json(orient='records', force_ascii=False))
+
+            # Step 6: Update EMBED in HTML files
+            try:
+                _update_html_embed(data)
+            except Exception as e:
+                print(f'[{bj_now():%H:%M}] EMBED update failed: {e}')
+
+            self._json({'ok': True, 'stocks': data, 'count': len(data), 'price_date': today})
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self._json({'ok': False, 'error': f'Unexpected error: {e}'}, 500)
+
+    def _api_pushplus(self):
+        """Manual PushPlus push notification with current data"""
+        token = os.getenv('PUSHPLUS_TOKEN', '')
+        if not token:
+            self._json({'ok': False, 'error': 'PUSHPLUS_TOKEN not configured'}, 400)
+            return
+
+        # Get current data: prefer price cache, fallback to parquet cache
+        cached_df, _ = load_price_cache()
+        if cached_df.empty:
+            df = screen_from_cache()
+            if df is None or df.empty:
+                self._json({'ok': False, 'error': 'No data available to push'}, 400)
+                return
+            cached_df = df
+
+        try:
+            data = json.loads(cached_df.to_json(orient='records', force_ascii=False))
+            html_content = build_push_html(cached_df)
+            ok = send_pushplus(token, f'High Dividend Daily Report ({len(data)} stocks)', html_content, 'html')
+            print(f'[{bj_now():%H:%M}] PushPlus manual: {"OK" if ok else "FAIL"}')
+            self._json({'ok': ok, 'count': len(data), 'message': 'Push sent' if ok else 'PushPlus send failed'})
+        except Exception as e:
+            self._json({'ok': False, 'error': f'PushPlus error: {e}'}, 500)
 
     def _json(self, data, status=200):
         body = json.dumps(data, ensure_ascii=False).encode('utf-8')

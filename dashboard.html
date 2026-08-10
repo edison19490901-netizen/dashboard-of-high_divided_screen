@@ -81,9 +81,9 @@ th,td{padding:4px 3px;font-size:.65rem}th:nth-child(5),td.c5,th:nth-child(9),td.
 <div class="toolbar">
 <button class="btn btn-view active" onclick="V.switch('grid')">Cards</button>
 <button class="btn btn-view" onclick="V.switch('table')">Table</button>
-<button class="btn btn-update" id="btnU" onclick="U()">update_dv&amp;val</button>
-<button class="btn btn-update" style="background:#8b5cf6" id="btnP" onclick="P()">Update Price</button>
-<button class="btn btn-update" style="background:#16a34a" onclick="X()">Export Excel</button>
+<button class="btn btn-update" id="btnU" onclick="A()">Update Data</button>
+<button class="btn btn-update" style="background:#16a34a" id="btnPP" onclick="PP()">PushPlus</button>
+<button class="btn btn-update" style="background:#059669" onclick="X()">Export Excel</button>
 <input class="search-box" id="q" placeholder="Search..." oninput="R()">
 <select class="sort-select" id="sort" onchange="R()">
 <option value="y">Div Yield &darr;</option><option value="Y">Div Yield &uarr;</option>
@@ -139,6 +139,11 @@ var D={
         R();
       }
     }catch(e){}
+    // Auto-update on cold start: if no data available, trigger full update
+    if(D._stocks.length===0 && base){
+      H.toast('ok','First load — fetching fresh data...');
+      setTimeout(function(){A();},800);
+    }
   },
 
   _updateDates(){
@@ -399,17 +404,17 @@ function R(){
   if(V._view==='grid') setTimeout(drawAllCharts,50);
 }
 
-// ════════════════════  update_dv&val  ════════════════════
-async function U(){
+// ════════════════════  Update Data (unified)  ════════════════════
+async function A(){
   var btn=document.getElementById('btnU'), api=D._detectApi();
   btn.disabled=true;btn.textContent='Updating...';
   try{
-    var r=await fetch(api+'/api/update',{method:'POST',signal:AbortSignal.timeout(300000)});
+    var r=await fetch(api+'/api/update_all',{method:'POST',signal:AbortSignal.timeout(300000)});
     var j=await r.json();
-    if(j.ok){H.toast('ok',j.message);setTimeout(function(){D.load(api);},2000);}
+    if(j.ok){D._stocks=j.stocks; D._loaded=true; D._updateMeta(); D._updateDates(); R(); H.toast('ok',j.count+' stocks updated');}
     else{H.toast('err',j.error||'Update failed');if(j.error&&j.error.indexOf('TUSHARE_TOKEN')>=0) _showToken();}
   }catch(e){H.toast('err','Connection failed: '+e.message);if(window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1') _showToken();}
-  btn.disabled=false;btn.textContent='update_dv&val';
+  btn.disabled=false;btn.textContent='Update Data';
 }
 
 // ════════════════════  Export Excel  ════════════════════
@@ -442,17 +447,17 @@ function X(){
   a.click();H.toast('ok','Exported');
 }
 
-// ════════════════════  Update Price  ════════════════════
-async function P(){
-  var btn=document.getElementById('btnP'), api=D._detectApi();
-  btn.disabled=true;btn.textContent='Updating...';
+// ════════════════════  PushPlus  ════════════════════
+async function PP(){
+  var btn=document.getElementById('btnPP'), api=D._detectApi();
+  btn.disabled=true;btn.textContent='Pushing...';
   try{
-    var r=await fetch(api+'/api/refresh_prices',{method:'POST',signal:AbortSignal.timeout(300000)});
+    var r=await fetch(api+'/api/pushplus',{method:'POST',signal:AbortSignal.timeout(30000)});
     var j=await r.json();
-    if(j.ok){D._stocks=j.stocks; D._loaded=true; D._updateMeta(); D._updateDates(); R(); H.toast('ok',j.count+' stocks updated');}
-    else{H.toast('err',j.error||'Update failed');}
-  }catch(e){H.toast('err','Connection failed: '+e.message);}
-  btn.disabled=false;btn.textContent='Update Price';
+    if(j.ok){H.toast('ok','PushPlus: '+j.count+' stocks sent');}
+    else{H.toast('err',j.error||'Push failed');}
+  }catch(e){H.toast('err','Push failed: '+e.message);}
+  btn.disabled=false;btn.textContent='PushPlus';
 }
 
 function _showToken(){
