@@ -400,7 +400,7 @@ class Handler(SimpleHTTPRequestHandler):
             self._json({'status': 'ok', 'cache': CACHE_DIR.exists()})
         elif path in ('/', '/dashboard.html'):
             self._serve_html()
-        elif path in ('/manifest.json', '/sw.js', '/icon-192.png', '/icon-512.png'):
+        elif path in ('/manifest.json', '/sw.js', '/stock_screen.png', '/screen_icon.png'):
             self._send_static(path)
         else:
             self.send_error(404)
