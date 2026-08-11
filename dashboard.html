@@ -147,11 +147,6 @@ var D={
         R();
       }
     }catch(e){}
-    // Auto-update on cold start: if no data available, trigger full update
-    if(D._stocks.length===0 && base){
-      H.toast('ok','First load — fetching fresh data...');
-      setTimeout(function(){A();},800);
-    }
   },
 
   _updateDates(){

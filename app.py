@@ -242,13 +242,8 @@ def run_full_pipeline(force_refresh=False):
         cached_df, _ = load_price_cache()
         if not cached_df.empty:
             return cached_df, True  # from_cache=True
-        # No price cache — try Tushare base data
+        # No price cache — try Tushare base data (no auto-fetch)
         df = screen_from_cache()
-        if df is None or df.empty:
-            # Auto-populate Tushare cache on cold start (e.g. Render restart)
-            ok, _ = update_tushare_cache()
-            if ok:
-                df = screen_from_cache()
         return (df if df is not None else pd.DataFrame()), False
 
     df = screen_from_cache()
