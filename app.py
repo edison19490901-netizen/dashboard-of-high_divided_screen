@@ -37,6 +37,7 @@ MIN_MARKET_CAP = 500
 MAX_PCT_FROM_LOW = 15       # Price within 15% of 1Y low
 MAX_PCT_FROM_LOWER = 15     # Price within 15% of weekly BB lower
 PRICE_CACHE_FILE = CACHE_DIR / 'price_cache.json'
+DPS_CACHE_FILE = CACHE_DIR / 'dps_cache.json'
 
 
 def load_token():
@@ -84,7 +85,70 @@ def screen_from_cache():
             'data_date': trade_date,
             'price_date': bj_now().strftime('%Y%m%d'),
         })
-    return pd.DataFrame(results)
+    result_df = pd.DataFrame(results)
+    if not result_df.empty:
+        try:
+            save_dps_cache_from_df(result_df)
+        except Exception:
+            pass
+    return result_df
+
+
+def load_dps_cache():
+    """Load cached DPS (dividend per share) keyed by ts_code"""
+    if DPS_CACHE_FILE.exists():
+        try:
+            with open(DPS_CACHE_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def save_dps_cache_from_df(df):
+    """Persist DPS from a screened DataFrame so yield can be recalculated with new prices"""
+    if df is None or df.empty:
+        return
+    cache = load_dps_cache()
+    today = bj_now().strftime('%Y%m%d')
+    for _, r in df.iterrows():
+        code = r.get('code', '')
+        dps = r.get('dividend_per_share')
+        if code and dps is not None and dps > 0:
+            cache[code] = {'dps': round(float(dps), 6), 'date': today}
+    try:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        with open(DPS_CACHE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(cache, f, ensure_ascii=False)
+    except Exception as e:
+        print(f'  DPS cache write error: {e}')
+
+
+def recalc_yield_from_dps(df):
+    """Recalculate dividend_yield = cached_dps / latest_price * 100 for each stock.
+    This allows updating yields without calling Tushare (avoiding rate limit).
+    Returns (df_updated, recalc_count)"""
+    if df is None or df.empty:
+        return df, 0
+    cache = load_dps_cache()
+    if not cache:
+        return df, 0
+    recalc = 0
+    for i, (_, r) in enumerate(df.iterrows()):
+        code = r.get('code', '')
+        if code in cache:
+            dps = cache[code]['dps']
+            price = r.get('latest_price', 0)
+            if price and price > 0:
+                new_yield = round(dps / float(price) * 100, 2)
+                old_yield = r.get('dividend_yield', 0)
+                if abs(new_yield - float(old_yield)) > 0.01:
+                    df.at[i, 'dividend_yield'] = new_yield
+                    df.at[i, 'dividend_per_share'] = round(dps, 4)
+                    recalc += 1
+    if recalc:
+        print(f'[{bj_now():%H:%M}] DPS recalc: {recalc} stocks yield updated from cache')
+    return df, recalc
 
 
 def supplement_baostock(df):
@@ -499,6 +563,14 @@ class Handler(SimpleHTTPRequestHandler):
         df_full = supplement_baostock(df.copy())
         today = bj_now().strftime('%Y%m%d %H:%M')
 
+        # Step 2b: Recalculate dividend yield from cached DPS ÷ latest price
+        df_full, recalc_n = recalc_yield_from_dps(df_full)
+        if recalc_n > 0:
+            df_full['dv_check'] = pd.to_numeric(df_full['dividend_yield'], errors='coerce')
+            df_full = df_full[df_full['dv_check'] > DIVIDEND_THRESHOLD].copy()
+            df_full.drop(columns=['dv_check'], inplace=True, errors='ignore')
+            print(f'[{bj_now():%H:%M}] DPS recalc: {len(df_full)} stocks after re-filter (>3% yield)')
+
         # Step 3: Apply price filter (skip if Baostock failed)
         baostock_ok = df_full['pct_from_low'].notna().any()
         if not baostock_ok:
@@ -558,6 +630,17 @@ class Handler(SimpleHTTPRequestHandler):
             # Step 3: Supplement with Baostock prices
             df_full = supplement_baostock(df.copy())
             today = bj_now().strftime('%Y%m%d %H:%M')
+
+            # Step 3b: Recalculate dividend yield from cached DPS ÷ latest price
+            # This keeps yields current even when Tushare is rate-limited
+            df_full, recalc_n = recalc_yield_from_dps(df_full)
+
+            # Step 3c: Re-apply dividend filter after DPS recalculation
+            if recalc_n > 0:
+                df_full['dv_check'] = pd.to_numeric(df_full['dividend_yield'], errors='coerce')
+                df_full = df_full[df_full['dv_check'] > DIVIDEND_THRESHOLD].copy()
+                df_full.drop(columns=['dv_check'], inplace=True, errors='ignore')
+                print(f'[{bj_now():%H:%M}] DPS recalc: {len(df_full)} stocks after re-filter (>3% yield)')
 
             # Step 4: Apply price filter (skip if Baostock failed)
             baostock_ok = df_full['pct_from_low'].notna().any()
