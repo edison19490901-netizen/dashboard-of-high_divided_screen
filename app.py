@@ -536,17 +536,28 @@ class Handler(SimpleHTTPRequestHandler):
     def _api_update_all(self):
         """Unified update: Tushare → screen → Baostock prices → filter → cache → EMBED"""
         try:
-            # Step 1: Update Tushare cache
+            # Step 1: Update Tushare cache (with fallback to existing cache)
             print(f'[{bj_now():%H:%M}] Update All: fetching Tushare...')
             ok, msg = update_tushare_cache()
+            tushare_ok = ok
+            cache_date = None
             if not ok:
-                self._json({'ok': False, 'error': f'Tushare failed: {msg}'}, 500)
-                return
+                # Fall back to existing cache if available (same pattern as _api_update)
+                pqts = sorted(CACHE_DIR.glob('daily_basic_*.parquet'), reverse=True)
+                if pqts:
+                    cache_date = pqts[0].stem.replace('daily_basic_', '')
+                    print(f'[{bj_now():%H:%M}] Tushare failed ({msg}), using cached data ({cache_date})')
+                else:
+                    self._json({'ok': False, 'error': f'Tushare failed and no cache exists: {msg}'}, 500)
+                    return
 
             # Step 2: Screen from cache
             df = screen_from_cache()
             if df is None or df.empty:
-                self._json({'ok': False, 'error': 'No stocks matched criteria after Tushare fetch'}, 500)
+                if not tushare_ok:
+                    self._json({'ok': False, 'error': f'Existing cache has no matching stocks (cache date: {cache_date})'}, 500)
+                else:
+                    self._json({'ok': False, 'error': 'No stocks matched criteria after Tushare fetch'}, 500)
                 return
 
             # Step 3: Supplement with Baostock prices
@@ -572,7 +583,10 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception as e:
                 print(f'[{bj_now():%H:%M}] EMBED update failed: {e}')
 
-            self._json({'ok': True, 'stocks': data, 'count': len(data), 'price_date': today})
+            resp = {'ok': True, 'stocks': data, 'count': len(data), 'price_date': today}
+            if not tushare_ok:
+                resp['warning'] = f'Tushare unavailable, using cached data ({cache_date}) — {msg}'
+            self._json(resp)
         except Exception as e:
             import traceback
             traceback.print_exc()

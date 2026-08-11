@@ -60,7 +60,7 @@ td.c0{text-align:center;color:var(--muted)}td.c1{text-align:center;font-family:i
 .t-target{font-family:monospace;font-size:.75rem}
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:10px;font-size:.88rem;z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
 .toast.show{opacity:1}.toast.ok{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.3)}
-.toast.err{background:rgba(239,68,68,.2);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.toast.err{background:rgba(239,68,68,.2);color:var(--red);border:1px solid rgba(239,68,68,.3)}.toast.warn{background:rgba(234,179,8,.2);color:var(--yellow);border:1px solid rgba(234,179,8,.3)}
 @media(max-width:768px){.container{padding:8px}.header{padding:18px 8px 12px}.header h1{font-size:1.2rem}
 .grid-view{grid-template-columns:1fr}.grid-view.active{grid-template-columns:1fr}
 .toolbar{flex-direction:column;align-items:stretch}
@@ -75,7 +75,7 @@ th,td{padding:4px 3px;font-size:.65rem}th:nth-child(5),td.c5,th:nth-child(9),td.
 </div>
 
 <div class="info-bar">
-<span id="metaDate">--</span><span class="sep">|</span><span id="metaCount">--</span><span class="sep">|</span><span id="metaSource">--</span>
+<span id="metaDate">--</span><span class="sep">|</span><span id="metaCount">--</span><span class="sep">|</span><span id="metaSource">--</span><span class="sep">|</span><span id="metaStatus">--</span>
 </div>
 
 <div class="toolbar">
@@ -120,7 +120,15 @@ var D={
     D._stocks=[]; D._loaded=false;
     if(typeof EMBED!=='undefined' && EMBED.length>0){
       D._stocks=EMBED; D._loaded=true;
-      document.getElementById('metaSource').textContent='Tushare+Baostock';
+      var srcText='Tushare+Baostock';
+      // Check EMBED staleness
+      var embDate=(EMBED[0]||{}).data_date||'';
+      if(embDate.length===8){
+        var ey=parseInt(embDate.substr(0,4)),em=parseInt(embDate.substr(4,2))-1,ed=parseInt(embDate.substr(6,2));
+        var embDt=new Date(ey,em,ed), daysOld=Math.floor((new Date()-embDt)/86400000);
+        if(daysOld>2) srcText+=' (EMBED '+daysOld+'d old)';
+      }
+      document.getElementById('metaSource').textContent=srcText;
       D._updateMeta();
       D._updateDates();
       R();
@@ -384,7 +392,7 @@ var H={
   n:function(v,d){return (Number(v)||0).toFixed(d);},
   m:function(l,v,c){return'<div class="card-m"><span class="cml">'+l+'</span><span class="cmv'+(c?' '+c:'')+'">'+H.e(v)+'</span></div>';},
   flash:function(el){el.style.background='rgba(99,102,241,.12)';setTimeout(function(){el.style.background='';},600);},
-  toast:function(t,m){var x=document.createElement('div');x.className='toast '+t+' show';x.textContent=m;document.body.appendChild(x);setTimeout(function(){x.classList.remove('show');setTimeout(function(){x.remove();},400);},3000);}
+  toast:function(t,m,d){var x=document.createElement('div');x.className='toast '+t+' show';x.textContent=m;document.body.appendChild(x);var dr=d||(t==='err'?8000:(t==='warn'?6000:3000));setTimeout(function(){x.classList.remove('show');setTimeout(function(){x.remove();},400);},dr);}
 };
 
 // ════════════════════  Render  ════════════════════
@@ -407,13 +415,34 @@ function R(){
 // ════════════════════  Update Data (unified)  ════════════════════
 async function A(){
   var btn=document.getElementById('btnU'), api=D._detectApi();
-  btn.disabled=true;btn.textContent='Updating...';
+  btn.disabled=true;
+  // Animated dots during update
+  var dots=0, dotTimer=setInterval(function(){dots=(dots+1)%4;btn.textContent='Updating'+'.'.repeat(dots);},500);
   try{
     var r=await fetch(api+'/api/update_all',{method:'POST',signal:AbortSignal.timeout(300000)});
     var j=await r.json();
-    if(j.ok){D._stocks=j.stocks; D._loaded=true; D._updateMeta(); D._updateDates(); R(); H.toast('ok',j.count+' stocks updated');}
-    else{H.toast('err',j.error||'Update failed');if(j.error&&j.error.indexOf('TUSHARE_TOKEN')>=0) _showToken();}
-  }catch(e){H.toast('err','Connection failed: '+e.message);if(window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1') _showToken();}
+    clearInterval(dotTimer);
+    if(j.ok){
+      D._stocks=j.stocks; D._loaded=true; D._updateMeta(); D._updateDates(); R();
+      var statusMsg=j.count+' stocks updated';
+      if(j.warning){
+        H.toast('warn',j.warning,6000);
+        _setStatus('warn','⚠ '+j.warning);
+      }else{
+        H.toast('ok',statusMsg);
+        _setStatus('ok','✔ '+statusMsg+' at '+new Date().toLocaleTimeString());
+      }
+    }else{
+      H.toast('err',j.error||'Update failed',8000);
+      _setStatus('err','✖ '+(j.error||'Update failed'));
+      if(j.error&&(j.error.indexOf('TUSHARE_TOKEN')>=0||j.error.indexOf('Tushare')>=0)) _showToken();
+    }
+  }catch(e){
+    clearInterval(dotTimer);
+    H.toast('err','Connection failed: '+e.message,8000);
+    _setStatus('err','✖ Connection failed');
+    _showToken();
+  }
   btn.disabled=false;btn.textContent='Update Data';
 }
 
@@ -461,7 +490,18 @@ async function PP(){
 }
 
 function _showToken(){
-  H.toast('err','TUSHARE_TOKEN not configured. Add it to .env and restart the server.');
+  H.toast('err','TUSHARE_TOKEN may missing. Set it in .env or Render env vars. On Render: also whitelist IP at tushare.pro.',10000);
+}
+
+function _setStatus(type, msg){
+  var el=document.getElementById('metaStatus');
+  if(!el) return;
+  el.textContent=msg;
+  el.className='';
+  if(type==='ok') el.style.color='var(--green)';
+  else if(type==='warn') el.style.color='var(--yellow)';
+  else if(type==='err') el.style.color='var(--red)';
+  else el.style.color='var(--muted)';
 }
 
 // ════════════════════  Boot  ════════════════════
